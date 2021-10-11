@@ -5,7 +5,7 @@ fs.readFile('./td_api.tl', 'utf8' , (err, data) => {
     console.error(err)
     return
   }
-  fs.writeFile('./td_api.ts', transpileTL(data), (err) => {if(err)throw err;});
+  fs.writeFile('./td_api.d.ts', transpileTL(data), (err) => {if(err)throw err;});
 })
 
 /** @param {string} line */
