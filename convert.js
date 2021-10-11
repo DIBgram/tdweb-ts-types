@@ -116,7 +116,7 @@ namespace TdApi {
 
     for(const abstractClass in abstractClasses) {
         transpiled+= `
-    type ${abstractClass} = ${abstractClasses[abstractClass].join(' | ')};`
+    export type ${abstractClass} = ${abstractClasses[abstractClass].join(' | ')};`
     }
 
     
