@@ -25,10 +25,26 @@ function parseTlType(line) {
     ].includes(subclass)) {
         return null;
     }
+    if(process.argv[2] !== '--disable-tdweb-additional-types' ){
+        if([ // Not supported on tdweb
+            'getStorageStatistics',
+            'getStorageStatisticsFast',
+            'optimizeStorage',
+            'addProxy',
+            'getFileDownloadedPrefixSize',
+        ].includes(subclass)) {
+            return null;
+        }
+    }
     return {
         subclass: subclass,
         properties: properties.map(property => {
             const [name, type] = property.split(':');
+            if(process.argv[2] !== '--disable-tdweb-additional-types' ){
+                if(subclass==='filePart' && name==='data'){
+                    return {name, type: 'blob'};
+                }
+            }
             return { name, type };
         }),
         abstractClass: right.trim().slice(0, -1),
@@ -80,8 +96,33 @@ function parseDocumentation(documentation) {
  */
 function parseTlFile(text) {
     var [_types, _functions] = text.split('---functions---');
-    const types = parseTlBlocks(getLines(_types));
-    const functions = _functions && parseTlBlocks(getLines(_functions));
+    var types = parseTlBlocks(getLines(_types));
+    var functions = _functions && parseTlBlocks(getLines(_functions));
+
+    if(process.argv[2] !== '--disable-tdweb-additional-types' ){
+        types= [
+            ...types,
+            ...parseTlBlocks([
+                '//@description TDLib has encountered a fatal error',
+                '//@error Error message',
+                'updateFatalError error:string = Update;',
+
+                '//@description A file from a JavaScript Blob',
+                '//@data JavaScript blob containing file data',
+                'inputFileBlob data:blob = InputFile;'
+            ])
+        ]
+
+        functions= [
+            ...functions,
+            ...parseTlBlocks([
+                '//@description Changes the verbosity level of TDWeb logging',
+                '//@new_verbosity_level New value of the verbosity level for logging.',
+                'setJsLogVerbosityLevel new_verbosity_level:jsLogLevel = Ok;'
+            ])
+        ]
+    }
+
     return {types, functions};
 }
 
@@ -102,6 +143,14 @@ namespace TdApi {
     type td_vector<t> = t[];
 
     `;
+
+    if(process.argv[2] !== '--disable-tdweb-additional-types' ){
+        transpiled+= `
+    type td_blob= Blob;
+    type td_jsLogLevel= 'error' | 'warning' | 'info' | 'log' | 'debug';
+
+    `
+    }
 
     const abstractClasses = {};
 
@@ -140,6 +189,16 @@ namespace TdApi {
 
     for(const functionReturnType in functionReturnTypes) {
         transpiled+= `t extends ${functionReturnType} ? ${functionReturnTypes[functionReturnType]} :
+        `
+    }
+
+    transpiled+= `never
+    
+    export type TdUpdateType<t> = 
+    `;
+
+    for(const updateType of abstractClasses['td_Update']) {
+        transpiled+= `t extends ${updateType} ? "${updateType.slice(3)}" :
         `
     }
 
