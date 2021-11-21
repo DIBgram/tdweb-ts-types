@@ -222,10 +222,12 @@ function transpileType(type) {
             property.type= `${name}<${types.map(type => 'td_'+type).join('<')}`;
         }
 
+        const doc= type.documentation[property.name];
+
         transpiled += `
-        ${type.documentation[property.name] ? '/** '+type.documentation[property.name].trim()+' */' : ''}`;
+        ${ doc? '/** '+doc.trim()+' */' : ''}`;
         transpiled += `
-        ${property.name}?: td_${property.type};`;
+        ${property.name}${doc.includes('may be null') ? '?' : ''}: td_${property.type};`;
     }
 
     transpiled += `
