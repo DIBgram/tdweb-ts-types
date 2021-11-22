@@ -177,7 +177,7 @@ namespace TdApi {
 
     const functionReturnTypes = {};
     for(const function_ of functions) {
-        transpiled+= transpileType(function_);
+        transpiled+= transpileType(function_, true);
         functionReturnTypes['td_' +function_.type.subclass] = 'td_' +function_.type.abstractClass;
     }
 
@@ -210,7 +210,7 @@ export default TdApi;
     return transpiled;
 }
 
-function transpileType(type) {
+function transpileType(type, isFunction) {
     let transpiled = `
     ${type.documentation.description ? '/** '+type.documentation.description.trim()+' */' : ''}
     export interface td_${type.type.subclass} {
@@ -223,11 +223,12 @@ function transpileType(type) {
         }
 
         const doc= type.documentation[property.name];
+        const optional= isFunction || (doc.includes('may be null') ? '?' : '');
 
         transpiled += `
         ${ doc? '/** '+doc.trim()+' */' : ''}`;
         transpiled += `
-        ${property.name}${doc.includes('may be null') ? '?' : ''}: td_${property.type};`;
+        ${property.name}${optional? '?' : ''}: td_${property.type};`;
     }
 
     transpiled += `
