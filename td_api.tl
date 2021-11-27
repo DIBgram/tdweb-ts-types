@@ -56,7 +56,7 @@ authenticationCodeTypeCall length:int32 = AuthenticationCodeType;
 authenticationCodeTypeFlashCall pattern:string = AuthenticationCodeType;
 
 
-//@description Information about the authentication code that was sent @phone_number A phone number that is being authenticated @type Describes the way the code was sent to the user @next_type Describes the way the next code will be sent to the user; may be null @timeout Timeout before the code can be re-sent, in seconds
+//@description Information about the authentication code that was sent @phone_number A phone number that is being authenticated @type The way the code was sent to the user @next_type The way the next code will be sent to the user; may be null @timeout Timeout before the code can be re-sent, in seconds
 authenticationCodeInfo phone_number:string type:AuthenticationCodeType next_type:AuthenticationCodeType timeout:int32 = AuthenticationCodeInfo;
 
 //@description Information about the email address authentication code that was sent @email_address_pattern Pattern of the email address to which an authentication code was sent @length Length of the code; 0 if unknown
@@ -234,6 +234,10 @@ maskPointChin = MaskPoint;
 maskPosition point:MaskPoint x_shift:double y_shift:double scale:double = MaskPosition;
 
 
+//@description Describes a color replacement for animated emoji @old_color Original animated emoji color in the RGB24 format @new_color Replacement animated emoji color in the RGB24 format
+colorReplacement old_color:int32 new_color:int32 = ColorReplacement;
+
+
 //@description Represents a closed vector path. The path begins at the end point of the last command @commands List of vector path commands
 closedVectorPath commands:vector<VectorPathCommand> = ClosedVectorPath;
 
@@ -293,6 +297,12 @@ videoNote duration:int32 length:int32 minithumbnail:minithumbnail thumbnail:thum
 //@description Describes a voice note. The voice note must be encoded with the Opus codec, and stored inside an OGG container. Voice notes can have only a single audio channel @duration Duration of the voice note, in seconds; as defined by the sender
 //@waveform A waveform representation of the voice note in 5-bit format @mime_type MIME type of the file; as defined by the sender @voice File containing the voice note
 voiceNote duration:int32 waveform:bytes mime_type:string voice:file = VoiceNote;
+
+//@description Describes an animated representation of an emoji
+//@sticker Animated sticker for the emoji
+//@color_replacements List of colors to be replaced while the sticker is rendered
+//@sound File containing the sound to be played when the animated emoji is clicked if any; may be null. The sound is encoded with the Opus codec, and stored inside an OGG container
+animatedEmoji sticker:sticker color_replacements:vector<colorReplacement> sound:file = AnimatedEmoji;
 
 //@description Describes a user contact @phone_number Phone number of the user @first_name First name of the user; 1-255 characters in length @last_name Last name of the user @vcard Additional data about the user in a form of vCard; 0-2048 bytes in length @user_id Identifier of the user, if known; otherwise 0
 contact phone_number:string first_name:string last_name:string vcard:string user_id:int53 = Contact;
@@ -457,7 +467,7 @@ chatPermissions can_send_messages:Bool can_send_media_messages:Bool can_send_pol
 //@is_member True, if the user is a member of the chat
 chatMemberStatusCreator custom_title:string is_anonymous:Bool is_member:Bool = ChatMemberStatus;
 
-//@description The user is a member of the chat and has some additional privileges. In basic groups, administrators can edit and delete messages sent by others, add new members, ban unprivileged members, and manage voice chats. In supergroups and channels, there are more detailed options for administrator privileges
+//@description The user is a member of the chat and has some additional privileges. In basic groups, administrators can edit and delete messages sent by others, add new members, ban unprivileged members, and manage video chats. In supergroups and channels, there are more detailed options for administrator privileges
 //@custom_title A custom title of the administrator; 0-16 characters without emojis; applicable to supergroups only
 //@can_be_edited True, if the current user can edit the administrator privileges for the called user
 //@can_manage_chat True, if the administrator can get chat event log, get chat statistics, get message statistics in channels, get channel members, see anonymous administrators in supergroups and ignore slow mode. Implied by any other privilege; applicable to supergroups and channels only
@@ -469,9 +479,9 @@ chatMemberStatusCreator custom_title:string is_anonymous:Bool is_member:Bool = C
 //@can_restrict_members True, if the administrator can restrict, ban, or unban chat members; always true for channels
 //@can_pin_messages True, if the administrator can pin messages; applicable to basic groups and supergroups only
 //@can_promote_members True, if the administrator can add new administrators with a subset of their own privileges or demote administrators that were directly or indirectly promoted by them
-//@can_manage_voice_chats True, if the administrator can manage voice chats
+//@can_manage_video_chats True, if the administrator can manage video chats
 //@is_anonymous True, if the administrator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only
-chatMemberStatusAdministrator custom_title:string can_be_edited:Bool can_manage_chat:Bool can_change_info:Bool can_post_messages:Bool can_edit_messages:Bool can_delete_messages:Bool can_invite_users:Bool can_restrict_members:Bool can_pin_messages:Bool can_promote_members:Bool can_manage_voice_chats:Bool is_anonymous:Bool = ChatMemberStatus;
+chatMemberStatusAdministrator custom_title:string can_be_edited:Bool can_manage_chat:Bool can_change_info:Bool can_post_messages:Bool can_edit_messages:Bool can_delete_messages:Bool can_invite_users:Bool can_restrict_members:Bool can_pin_messages:Bool can_promote_members:Bool can_manage_video_chats:Bool is_anonymous:Bool = ChatMemberStatus;
 
 //@description The user is a member of the chat, without any additional privileges or restrictions
 chatMemberStatusMember = ChatMemberStatus;
@@ -485,12 +495,12 @@ chatMemberStatusRestricted is_member:Bool restricted_until_date:int32 permission
 //@description The user or the chat is not a chat member
 chatMemberStatusLeft = ChatMemberStatus;
 
-//@description The user or the chat was banned (and hence is not a member of the chat). Implies the user can't return to the chat, view messages, or be used as a participant identifier to join a voice chat of the chat
+//@description The user or the chat was banned (and hence is not a member of the chat). Implies the user can't return to the chat, view messages, or be used as a participant identifier to join a video chat of the chat
 //@banned_until_date Point in time (Unix timestamp) when the user will be unbanned; 0 if never. If the user is banned for more than 366 days or for less than 30 seconds from the current time, the user is considered to be banned forever. Always 0 in basic groups
 chatMemberStatusBanned banned_until_date:int32 = ChatMemberStatus;
 
 
-//@description Information about a user or a chat as a member of another chat
+//@description Describes a user or a chat as a member of another chat
 //@member_id Identifier of the chat member. Currently, other chats can be only Left or Banned. Only supergroups and channels can have other chats as Left or Banned members and these chats must be supergroups or channels
 //@inviter_user_id Identifier of a user that invited/promoted/banned this member in the chat; 0 if unknown
 //@joined_chat_date Point in time (Unix timestamp) when the user joined the chat
@@ -552,15 +562,20 @@ supergroupMembersFilterMention query:string message_thread_id:int53 = Supergroup
 supergroupMembersFilterBots = SupergroupMembersFilter;
 
 
-//@description Contains a chat invite link @invite_link Chat invite link @creator_user_id User identifier of an administrator created the link
+//@description Contains a chat invite link
+//@invite_link Chat invite link
+//@name Name of the link
+//@creator_user_id User identifier of an administrator created the link
 //@date Point in time (Unix timestamp) when the link was created
 //@edit_date Point in time (Unix timestamp) when the link was last edited; 0 if never or unknown
 //@expire_date Point in time (Unix timestamp) when the link will expire; 0 if never
-//@member_limit The maximum number of members, which can join the chat using the link simultaneously; 0 if not limited
+//@member_limit The maximum number of members, which can join the chat using the link simultaneously; 0 if not limited. Always 0 if the link requires approval
 //@member_count Number of chat members, which joined the chat using the link
-//@is_primary True, if the link is primary. Primary invite link can't have expire date or usage limit. There is exactly one primary invite link for each administrator with can_invite_users right at a given time
+//@pending_join_request_count Number of pending join requests created using this link
+//@creates_join_request True, if the link only creates join request. If true, total number of joining members will be unlimited
+//@is_primary True, if the link is primary. Primary invite link can't have name, expire date or usage limit. There is exactly one primary invite link for each administrator with can_invite_users right at a given time
 //@is_revoked True, if the link was revoked
-chatInviteLink invite_link:string creator_user_id:int53 date:int32 edit_date:int32 expire_date:int32 member_limit:int32 member_count:int32 is_primary:Bool is_revoked:Bool = ChatInviteLink;
+chatInviteLink invite_link:string name:string creator_user_id:int53 date:int32 edit_date:int32 expire_date:int32 member_limit:int32 member_count:int32 pending_join_request_count:int32 creates_join_request:Bool is_primary:Bool is_revoked:Bool = ChatInviteLink;
 
 //@description Contains a list of chat invite links @total_count Approximate total count of chat invite links found @invite_links List of invite links
 chatInviteLinks total_count:int32 invite_links:vector<chatInviteLink> = ChatInviteLinks;
@@ -571,11 +586,11 @@ chatInviteLinks total_count:int32 invite_links:vector<chatInviteLink> = ChatInvi
 //@revoked_invite_link_count Number of revoked invite links
 chatInviteLinkCount user_id:int53 invite_link_count:int32 revoked_invite_link_count:int32 = ChatInviteLinkCount;
 
-//@description Contains a list of chat invite link counts @invite_link_counts List of invite linkcounts
+//@description Contains a list of chat invite link counts @invite_link_counts List of invite link counts
 chatInviteLinkCounts invite_link_counts:vector<chatInviteLinkCount> = ChatInviteLinkCounts;
 
-//@description Describes a chat member joined a chat by an invite link @user_id User identifier @joined_chat_date Point in time (Unix timestamp) when the user joined the chat
-chatInviteLinkMember user_id:int53 joined_chat_date:int32 = ChatInviteLinkMember;
+//@description Describes a chat member joined a chat by an invite link @user_id User identifier @joined_chat_date Point in time (Unix timestamp) when the user joined the chat @approver_user_id User identifier of the chat administrator, approved user join request
+chatInviteLinkMember user_id:int53 joined_chat_date:int32 approver_user_id:int53 = ChatInviteLinkMember;
 
 //@description Contains a list of chat members joined a chat by an invite link @total_count Approximate total count of chat members found @members List of chat members, joined a chat by an invite link
 chatInviteLinkMembers total_count:int32 members:vector<chatInviteLinkMember> = ChatInviteLinkMembers;
@@ -583,13 +598,24 @@ chatInviteLinkMembers total_count:int32 members:vector<chatInviteLinkMember> = C
 //@description Contains information about a chat invite link
 //@chat_id Chat identifier of the invite link; 0 if the user has no access to the chat before joining
 //@accessible_for If non-zero, the amount of time for which read access to the chat will remain available, in seconds
-//@type Contains information about the type of the chat
+//@type Type of the chat
 //@title Title of the chat
 //@photo Chat photo; may be null
+//@param_description Chat description
 //@member_count Number of members in the chat
 //@member_user_ids User identifiers of some chat members that may be known to the current user
+//@creates_join_request True, if the link only creates join request
 //@is_public True, if the chat is a public supergroup or channel, i.e. it has a username or it is a location-based supergroup
-chatInviteLinkInfo chat_id:int53 accessible_for:int32 type:ChatType title:string photo:chatPhotoInfo member_count:int32 member_user_ids:vector<int53> is_public:Bool = ChatInviteLinkInfo;
+chatInviteLinkInfo chat_id:int53 accessible_for:int32 type:ChatType title:string photo:chatPhotoInfo description:string member_count:int32 member_user_ids:vector<int53> creates_join_request:Bool is_public:Bool = ChatInviteLinkInfo;
+
+//@description Describes a user that sent a join request and waits for administrator approval @user_id User identifier @date Point in time (Unix timestamp) when the user sent the join request @bio A short bio of the user
+chatJoinRequest user_id:int53 date:int32 bio:string = ChatJoinRequest;
+
+//@description Contains a list of chat join requests @total_count Approximate total count of requests found @requests List of the requests
+chatJoinRequests total_count:int32 requests:vector<chatJoinRequest> = ChatJoinRequests;
+
+//@description Contains information about pending chat join requests @total_count Total number of pending join requests @user_ids Identifiers of users sent the newest pending join requests
+chatJoinRequestsInfo total_count:int32 user_ids:vector<int53> = ChatJoinRequestsInfo;
 
 
 //@description Represents a basic group of 0-200 users (must be upgraded to a supergroup to accommodate more than 200 users)
@@ -731,7 +757,7 @@ messageReplyInfo reply_count:int32 recent_repliers:vector<MessageSender> last_re
 //@description Contains information about interactions with a message
 //@view_count Number of times the message was viewed
 //@forward_count Number of times the message was forwarded
-//@reply_info Contains information about direct or indirect replies to the message; may be null. Currently, available only in channels with a discussion supergroup and discussion supergroups for messages, which are not replies itself
+//@reply_info Information about direct or indirect replies to the message; may be null. Currently, available only in channels with a discussion supergroup and discussion supergroups for messages, which are not replies itself
 messageInteractionInfo view_count:int32 forward_count:int32 reply_info:messageReplyInfo = MessageInteractionInfo;
 
 
@@ -749,8 +775,8 @@ messageSendingStateFailed error_code:int32 error_message:string can_retry:Bool r
 //@id Message identifier; unique for the chat to which the message belongs
 //@sender The sender of the message
 //@chat_id Chat identifier
-//@sending_state Information about the sending state of the message; may be null
-//@scheduling_state Information about the scheduling state of the message; may be null
+//@sending_state The sending state of the message; may be null
+//@scheduling_state The scheduling state of the message; may be null
 //@is_outgoing True, if the message is outgoing
 //@is_pinned True, if the message is pinned
 //@can_be_edited True, if the message can be edited. For live location and poll messages this fields shows whether editMessageLiveLocation or stopPoll can be used with this message by the application
@@ -786,6 +812,18 @@ messages total_count:int32 messages:vector<message> = Messages;
 
 //@description Contains a list of messages found by a search @total_count Approximate total count of messages found; -1 if unknown @messages List of messages @next_offset The offset for the next request. If empty, there are no more results
 foundMessages total_count:int32 messages:vector<message> next_offset:string = FoundMessages;
+
+//@description Contains information about a message in a specific position @position 0-based message position in the full list of suitable messages @message_id Message identifier @date Point in time (Unix timestamp) when the message was sent
+messagePosition position:int32 message_id:int53 date:int32 = MessagePosition;
+
+//@description Contains a list of message positions @total_count Total count of messages found @positions List of message positions
+messagePositions total_count:int32 positions:vector<messagePosition> = MessagePositions;
+
+//@description Contains information about found messages sent in a specific day @total_count Total number of found messages sent in the day @message First message sent in the day
+messageCalendarDay total_count:int32 message:message = MessageCalendarDay;
+
+//@description Contains information about found messages, splitted by days according to the option "utc_time_offset" @total_count Total number of found messages @days Information about messages sent
+messageCalendar total_count:int32 days:vector<messageCalendarDay> = MessageCalendar;
 
 
 //@description Describes a sponsored message @id Unique sponsored message identifier @sponsor_chat_id Chat identifier
@@ -909,11 +947,11 @@ chatSourcePublicServiceAnnouncement type:string text:string = ChatSource;
 chatPosition list:ChatList order:int64 is_pinned:Bool source:ChatSource = ChatPosition;
 
 
-//@description Describes a voice chat
-//@group_call_id Group call identifier of an active voice chat; 0 if none. Full informationa about the voice chat can be received through the method getGroupCall
-//@has_participants True, if the voice chat has participants
-//@default_participant_id Default group call participant identifier to join the voice chat; may be null
-voiceChat group_call_id:int32 has_participants:Bool default_participant_id:MessageSender = VoiceChat;
+//@description Describes a video chat
+//@group_call_id Group call identifier of an active video chat; 0 if none. Full information about the video chat can be received through the method getGroupCall
+//@has_participants True, if the video chat has participants
+//@default_participant_id Default group call participant identifier to join the video chat; may be null
+videoChat group_call_id:int32 has_participants:Bool default_participant_id:MessageSender = VideoChat;
 
 
 //@description A chat. (Can be a private chat, basic group, supergroup, or secret chat)
@@ -938,12 +976,13 @@ voiceChat group_call_id:int32 has_participants:Bool default_participant_id:Messa
 //@notification_settings Notification settings for this chat
 //@message_ttl_setting Current message Time To Live setting (self-destruct timer) for the chat; 0 if not defined. TTL is counted from the time message or its content is viewed in secret chats and from the send date in other chats
 //@theme_name If non-empty, name of a theme, set for the chat
-//@action_bar Describes actions which must be possible to do through a chat action bar; may be null
-//@voice_chat Contains information about voice chat of the chat
+//@action_bar Information about actions which must be possible to do through the chat action bar; may be null
+//@video_chat Information about video chat of the chat
+//@pending_join_requests Information about pending join requests; may be null
 //@reply_markup_message_id Identifier of the message from which reply markup needs to be used; 0 if there is no default custom reply markup in the chat
 //@draft_message A draft of a message in the chat; may be null
-//@client_data Contains application-specific data associated with the chat. (For example, the chat scroll position or local chat notification settings can be stored here.) Persistent if the message database is used
-chat id:int53 type:ChatType title:string photo:chatPhotoInfo permissions:chatPermissions last_message:message positions:vector<chatPosition> is_marked_as_unread:Bool is_blocked:Bool has_scheduled_messages:Bool can_be_deleted_only_for_self:Bool can_be_deleted_for_all_users:Bool can_be_reported:Bool default_disable_notification:Bool unread_count:int32 last_read_inbox_message_id:int53 last_read_outbox_message_id:int53 unread_mention_count:int32 notification_settings:chatNotificationSettings message_ttl_setting:int32 theme_name:string action_bar:ChatActionBar voice_chat:voiceChat reply_markup_message_id:int53 draft_message:draftMessage client_data:string = Chat;
+//@client_data Application-specific data associated with the chat. (For example, the chat scroll position or local chat notification settings can be stored here.) Persistent if the message database is used
+chat id:int53 type:ChatType title:string photo:chatPhotoInfo permissions:chatPermissions last_message:message positions:vector<chatPosition> is_marked_as_unread:Bool is_blocked:Bool has_scheduled_messages:Bool can_be_deleted_only_for_self:Bool can_be_deleted_for_all_users:Bool can_be_reported:Bool default_disable_notification:Bool unread_count:int32 last_read_inbox_message_id:int53 last_read_outbox_message_id:int53 unread_mention_count:int32 notification_settings:chatNotificationSettings message_ttl_setting:int32 theme_name:string action_bar:ChatActionBar video_chat:videoChat pending_join_requests:chatJoinRequestsInfo reply_markup_message_id:int53 draft_message:draftMessage client_data:string = Chat;
 
 //@description Represents a list of chats @total_count Approximate total count of chats found @chat_ids List of chat identifiers
 chats total_count:int32 chat_ids:vector<int53> = Chats;
@@ -1073,7 +1112,7 @@ loginUrlInfoRequestConfirmation url:string domain:string bot_user_id:int53 reque
 //@description Contains information about a message thread
 //@chat_id Identifier of the chat to which the message thread belongs
 //@message_thread_id Message thread identifier, unique within the chat
-//@reply_info Contains information about the message thread
+//@reply_info Information about the message thread
 //@unread_message_count Approximate number of unread messages in the message thread
 //@messages The messages from which the thread starts. The messages are returned in a reverse chronological order (i.e., in order of decreasing message_id)
 //@draft_message A draft of a message in the message thread; may be null
@@ -1359,7 +1398,7 @@ savedCredentials id:string title:string = SavedCredentials;
 //@description Applies if a user chooses some previously saved payment credentials. To use their previously saved credentials, the user must have a valid temporary password @saved_credentials_id Identifier of the saved credentials
 inputCredentialsSaved saved_credentials_id:string = InputCredentials;
 
-//@description Applies if a user enters new credentials on a payment provider website @data Contains JSON-encoded data with a credential identifier from the payment provider @allow_save True, if the credential identifier can be saved on the server side
+//@description Applies if a user enters new credentials on a payment provider website @data JSON-encoded data with the credential identifier from the payment provider @allow_save True, if the credential identifier can be saved on the server side
 inputCredentialsNew data:string allow_save:Bool = InputCredentials;
 
 //@description Applies if a user enters new credentials using Apple Pay @data JSON-encoded data with the credential identifier
@@ -1372,7 +1411,7 @@ inputCredentialsGooglePay data:string = InputCredentials;
 paymentsProviderStripe publishable_key:string need_country:Bool need_postal_code:Bool need_cardholder_name:Bool = PaymentsProviderStripe;
 
 //@description Theme colors for a payment form @background_color A color of the payment form background in the RGB24 format @text_color A color of text in the RGB24 format
-//@hint_color A color of hints in the RGB24 format @link_color A color of links in the RGB24 format @button_color A color of thebuttons in the RGB24 format
+//@hint_color A color of hints in the RGB24 format @link_color A color of links in the RGB24 format @button_color A color of the buttons in the RGB24 format
 //@button_text_color A color of text on the buttons in the RGB24 format
 paymentFormTheme background_color:int32 text_color:int32 hint_color:int32 link_color:int32 button_color:int32 button_text_color:int32 = PaymentFormTheme;
 
@@ -1382,9 +1421,9 @@ paymentFormTheme background_color:int32 text_color:int32 hint_color:int32 link_c
 //@url Payment form URL
 //@seller_bot_user_id User identifier of the seller bot
 //@payments_provider_user_id User identifier of the payment provider bot
-//@payments_provider Contains information about the payment provider, if available, to support it natively without the need for opening the URL; may be null
+//@payments_provider Information about the payment provider, if available, to support it natively without the need for opening the URL; may be null
 //@saved_order_info Saved server-side order information; may be null
-//@saved_credentials Contains information about saved card credentials; may be null
+//@saved_credentials Information about saved card credentials; may be null
 //@can_save_credentials True, if the user can choose to save credentials
 //@need_password True, if the user will be able to save credentials protected by a password they set up
 paymentForm id:int64 invoice:invoice url:string seller_bot_user_id:int53 payments_provider_user_id:int53 payments_provider:paymentsProviderStripe saved_order_info:orderInfo saved_credentials:savedCredentials can_save_credentials:Bool need_password:Bool = PaymentForm;
@@ -1402,7 +1441,7 @@ paymentResult success:Bool verification_url:string = PaymentResult;
 //@date Point in time (Unix timestamp) when the payment was made
 //@seller_bot_user_id User identifier of the seller bot
 //@payments_provider_user_id User identifier of the payment provider bot
-//@invoice Contains information about the invoice
+//@invoice Information about the invoice
 //@order_info Order information; may be null
 //@shipping_option Chosen shipping option; may be null
 //@credentials_title Title of the saved credentials chosen by the buyer
@@ -1610,7 +1649,7 @@ passportSuitableElement type:PassportElementType is_selfie_required:Bool is_tran
 passportRequiredElement suitable_elements:vector<passportSuitableElement> = PassportRequiredElement;
 
 //@description Contains information about a Telegram Passport authorization form that was requested @id Unique identifier of the authorization form
-//@required_elements Information about the Telegram Passport elements that must be provided to complete the form
+//@required_elements Telegram Passport elements that must be provided to complete the form
 //@privacy_policy_url URL for the privacy policy of the service; may be empty
 passportAuthorizationForm id:int32 required_elements:vector<passportRequiredElement> privacy_policy_url:string = PassportAuthorizationForm;
 
@@ -1707,6 +1746,9 @@ messageVenue venue:venue = MessageContent;
 //@description A message with a user contact @contact The contact description
 messageContact contact:contact = MessageContent;
 
+//@description A message with an animated emoji @animated_emoji The animated emoji @emoji The corresponding emoji
+messageAnimatedEmoji animated_emoji:animatedEmoji emoji:string = MessageContent;
+
 //@description A dice message. The dice value is randomly generated by the server
 //@initial_state The animated stickers with the initial dice animation; may be null if unknown. updateMessageContent will be sent when the sticker became known
 //@final_state The animated stickers with the final dice animation; may be null if unknown. updateMessageContent will be sent when the sticker became known
@@ -1729,17 +1771,17 @@ messageInvoice title:string description:string photo:photo currency:string total
 //@description A message with information about an ended call @is_video True, if the call was a video call @discard_reason Reason why the call was discarded @duration Call duration, in seconds
 messageCall is_video:Bool discard_reason:CallDiscardReason duration:int32 = MessageContent;
 
-//@description A new voice chat was scheduled @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall @start_date Point in time (Unix timestamp) when the group call is supposed to be started by an administrator
-messageVoiceChatScheduled group_call_id:int32 start_date:int32 = MessageContent;
+//@description A new video chat was scheduled @group_call_id Identifier of the video chat. The video chat can be received through the method getGroupCall @start_date Point in time (Unix timestamp) when the group call is supposed to be started by an administrator
+messageVideoChatScheduled group_call_id:int32 start_date:int32 = MessageContent;
 
-//@description A newly created voice chat @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-messageVoiceChatStarted group_call_id:int32 = MessageContent;
+//@description A newly created video chat @group_call_id Identifier of the video chat. The video chat can be received through the method getGroupCall
+messageVideoChatStarted group_call_id:int32 = MessageContent;
 
-//@description A message with information about an ended voice chat @duration Call duration, in seconds
-messageVoiceChatEnded duration:int32 = MessageContent;
+//@description A message with information about an ended video chat @duration Call duration, in seconds
+messageVideoChatEnded duration:int32 = MessageContent;
 
-//@description A message with information about an invite to a voice chat @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall @user_ids Invited user identifiers
-messageInviteVoiceChatParticipants group_call_id:int32 user_ids:vector<int53> = MessageContent;
+//@description A message with information about an invite to a video chat @group_call_id Identifier of the video chat. The video chat can be received through the method getGroupCall @user_ids Invited user identifiers
+messageInviteVideoChatParticipants group_call_id:int32 user_ids:vector<int53> = MessageContent;
 
 //@description A newly created basic group @title Title of the basic group @member_user_ids User identifiers of members in the basic group
 messageBasicGroupChatCreate title:string member_user_ids:vector<int53> = MessageContent;
@@ -1761,6 +1803,9 @@ messageChatAddMembers member_user_ids:vector<int53> = MessageContent;
 
 //@description A new member joined the chat by invite link
 messageChatJoinByLink = MessageContent;
+
+//@description A new member was accepted to the chat by an administrator
+messageChatJoinByRequest = MessageContent;
 
 //@description A chat member was deleted @user_id User identifier of the deleted chat member
 messageChatDeleteMember user_id:int53 = MessageContent;
@@ -2118,7 +2163,7 @@ stickerSet id:int64 title:string name:string thumbnail:thumbnail thumbnail_outli
 //@thumbnail_outline Sticker set thumbnail's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner
 //@is_installed True, if the sticker set has been installed by the current user @is_archived True, if the sticker set has been archived. A sticker set can't be installed and archived simultaneously
 //@is_official True, if the sticker set is official @is_animated True, is the stickers in the set are animated @is_masks True, if the stickers in the set are masks @is_viewed True for already viewed trending sticker sets
-//@size Total number of stickers in the set @covers Contains up to the first 5 stickers from the set, depending on the context. If the application needs more stickers the full sticker set needs to be requested
+//@size Total number of stickers in the set @covers Up to the first 5 stickers from the set, depending on the context. If the application needs more stickers the full sticker set needs to be requested
 stickerSetInfo id:int64 title:string name:string thumbnail:thumbnail thumbnail_outline:vector<closedVectorPath> is_installed:Bool is_archived:Bool is_official:Bool is_animated:Bool is_masks:Bool is_viewed:Bool size:int32 covers:vector<sticker> = StickerSetInfo;
 
 //@description Represents a list of sticker sets @total_count Approximate total number of sticker sets found @sets List of sticker sets
@@ -2497,6 +2542,9 @@ chatEventMemberJoined = ChatEventAction;
 //@description A new member joined the chat by an invite link @invite_link Invite link used to join the chat
 chatEventMemberJoinedByInviteLink invite_link:chatInviteLink = ChatEventAction;
 
+//@description A new member was accepted to the chat by an administrator @approver_user_id User identifier of the chat administrator, approved user join request @invite_link Invite link used to join the chat; may be null
+chatEventMemberJoinedByRequest approver_user_id:int53 invite_link:chatInviteLink = ChatEventAction;
+
 //@description A member left the chat
 chatEventMemberLeft = ChatEventAction;
 
@@ -2530,7 +2578,7 @@ chatEventInvitesToggled can_invite_users:Bool = ChatEventAction;
 //@description The linked chat of a supergroup was changed @old_linked_chat_id Previous supergroup linked chat identifier @new_linked_chat_id New supergroup linked chat identifier
 chatEventLinkedChatChanged old_linked_chat_id:int53 new_linked_chat_id:int53 = ChatEventAction;
 
-//@description The slow_mode_delay setting of a supergroup was changed @old_slow_mode_delay Previous value of slow_mode_delay @new_slow_mode_delay New value of slow_mode_delay
+//@description The slow_mode_delay setting of a supergroup was changed @old_slow_mode_delay Previous value of slow_mode_delay, in seconds @new_slow_mode_delay New value of slow_mode_delay, in seconds
 chatEventSlowModeDelayChanged old_slow_mode_delay:int32 new_slow_mode_delay:int32 = ChatEventAction;
 
 //@description The message TTL setting was changed @old_message_ttl_setting Previous value of message_ttl_setting @new_message_ttl_setting New value of message_ttl_setting
@@ -2557,20 +2605,20 @@ chatEventInviteLinkRevoked invite_link:chatInviteLink = ChatEventAction;
 //@description A revoked chat invite link was deleted @invite_link The invite link
 chatEventInviteLinkDeleted invite_link:chatInviteLink = ChatEventAction;
 
-//@description A voice chat was created @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-chatEventVoiceChatCreated group_call_id:int32 = ChatEventAction;
+//@description A video chat was created @group_call_id Identifier of the video chat. The video chat can be received through the method getGroupCall
+chatEventVideoChatCreated group_call_id:int32 = ChatEventAction;
 
-//@description A voice chat was discarded @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-chatEventVoiceChatDiscarded group_call_id:int32 = ChatEventAction;
+//@description A video chat was discarded @group_call_id Identifier of the video chat. The video chat can be received through the method getGroupCall
+chatEventVideoChatDiscarded group_call_id:int32 = ChatEventAction;
 
-//@description A voice chat participant was muted or unmuted @participant_id Identifier of the affected group call participant @is_muted New value of is_muted
-chatEventVoiceChatParticipantIsMutedToggled participant_id:MessageSender is_muted:Bool = ChatEventAction;
+//@description A video chat participant was muted or unmuted @participant_id Identifier of the affected group call participant @is_muted New value of is_muted
+chatEventVideoChatParticipantIsMutedToggled participant_id:MessageSender is_muted:Bool = ChatEventAction;
 
-//@description A voice chat participant volume level was changed @participant_id Identifier of the affected group call participant @volume_level New value of volume_level; 1-20000 in hundreds of percents
-chatEventVoiceChatParticipantVolumeLevelChanged participant_id:MessageSender volume_level:int32 = ChatEventAction;
+//@description A video chat participant volume level was changed @participant_id Identifier of the affected group call participant @volume_level New value of volume_level; 1-20000 in hundreds of percents
+chatEventVideoChatParticipantVolumeLevelChanged participant_id:MessageSender volume_level:int32 = ChatEventAction;
 
-//@description The mute_new_participants setting of a voice chat was toggled @mute_new_participants New value of the mute_new_participants setting
-chatEventVoiceChatMuteNewParticipantsToggled mute_new_participants:Bool = ChatEventAction;
+//@description The mute_new_participants setting of a video chat was toggled @mute_new_participants New value of the mute_new_participants setting
+chatEventVideoChatMuteNewParticipantsToggled mute_new_participants:Bool = ChatEventAction;
 
 //@description Represents a chat event @id Chat event identifier @date Point in time (Unix timestamp) when the event happened @user_id Identifier of the user who performed the action that triggered the event @action Action performed by the user
 chatEvent id:int64 date:int32 user_id:int53 action:ChatEventAction = ChatEvent;
@@ -2590,8 +2638,8 @@ chatEvents events:vector<chatEvent> = ChatEvents;
 //@info_changes True, if changes in chat information need to be returned
 //@setting_changes True, if changes in chat settings need to be returned
 //@invite_link_changes True, if changes to invite links need to be returned
-//@voice_chat_changes True, if voice chat actions need to be returned
-chatEventLogFilters message_edits:Bool message_deletions:Bool message_pins:Bool member_joins:Bool member_leaves:Bool member_invites:Bool member_promotions:Bool member_restrictions:Bool info_changes:Bool setting_changes:Bool invite_link_changes:Bool voice_chat_changes:Bool = ChatEventLogFilters;
+//@video_chat_changes True, if video chat actions need to be returned
+chatEventLogFilters message_edits:Bool message_deletions:Bool message_pins:Bool member_joins:Bool member_leaves:Bool member_invites:Bool member_promotions:Bool member_restrictions:Bool info_changes:Bool setting_changes:Bool invite_link_changes:Bool video_chat_changes:Bool = ChatEventLogFilters;
 
 
 //@class LanguagePackStringValue @description Represents the value of a string in a language pack
@@ -2690,13 +2738,13 @@ backgroundFillFreeformGradient colors:vector<int32> = BackgroundFill;
 backgroundTypeWallpaper is_blurred:Bool is_moving:Bool = BackgroundType;
 
 //@description A PNG or TGV (gzipped subset of SVG with MIME type "application/x-tgwallpattern") pattern to be combined with the background fill chosen by the user
-//@fill Description of the background fill
+//@fill Fill of the background
 //@intensity Intensity of the pattern when it is shown above the filled background; 0-100.
 //@is_inverted True, if the background fill must be applied only to the pattern itself. All other pixels are black in this case. For dark themes only
 //@is_moving True, if the background needs to be slightly moved when device is tilted
 backgroundTypePattern fill:BackgroundFill intensity:int32 is_inverted:Bool is_moving:Bool = BackgroundType;
 
-//@description A filled background @fill Description of the background fill
+//@description A filled background @fill The background fill
 backgroundTypeFill fill:BackgroundFill = BackgroundType;
 
 
@@ -2890,6 +2938,9 @@ pushMessageContentChatDeleteMember member_name:string is_current_user:Bool is_le
 
 //@description A new member joined the chat by invite link
 pushMessageContentChatJoinByLink = PushMessageContent;
+
+//@description A new member was accepted to the chat by an administrator
+pushMessageContentChatJoinByRequest = PushMessageContent;
 
 //@description A forwarded messages @total_count Number of forwarded messages
 pushMessageContentMessageForwards total_count:int32 = PushMessageContent;
@@ -3180,10 +3231,13 @@ internalLinkTypeThemeSettings = InternalLinkType;
 //@description The link is an unknown tg: link. Call getDeepLinkInfo to process the link @link Link to be passed to getDeepLinkInfo
 internalLinkTypeUnknownDeepLink link:string = InternalLinkType;
 
-//@description The link is a link to a voice chat. Call searchPublicChat with the given chat username, and then joinGoupCall with the given invite hash to process the link
-//@chat_username Username of the chat with the voice chat @invite_hash If non-empty, invite hash to be used to join the voice chat without being muted by administrators
-//@is_live_stream True, if the voice chat is expected to be a live stream in a channel or a broadcast group
-internalLinkTypeVoiceChat chat_username:string invite_hash:string is_live_stream:Bool = InternalLinkType;
+//@description The link is a link to an unsupported proxy. An alert can be shown to the user
+internalLinkTypeUnsupportedProxy = InternalLinkType;
+
+//@description The link is a link to a video chat. Call searchPublicChat with the given chat username, and then joinGoupCall with the given invite hash to process the link
+//@chat_username Username of the chat with the video chat @invite_hash If non-empty, invite hash to be used to join the video chat without being muted by administrators
+//@is_live_stream True, if the video chat is expected to be a live stream in a channel or a broadcast group
+internalLinkTypeVideoChat chat_username:string invite_hash:string is_live_stream:Bool = InternalLinkType;
 
 
 //@description Contains an HTTPS link to a message in a supergroup or channel @link Message link @is_public True, if the link will work for non-members of the chat
@@ -3603,11 +3657,11 @@ updateNewMessage message:message = Update;
 //@chat_id The chat identifier of the sent message @message_id A temporary message identifier
 updateMessageSendAcknowledged chat_id:int53 message_id:int53 = Update;
 
-//@description A message has been successfully sent @message Information about the sent message. Usually only the message identifier, date, and content are changed, but almost all other fields can also change @old_message_id The previous temporary message identifier
+//@description A message has been successfully sent @message The sent message. Usually only the message identifier, date, and content are changed, but almost all other fields can also change @old_message_id The previous temporary message identifier
 updateMessageSendSucceeded message:message old_message_id:int53 = Update;
 
 //@description A message failed to send. Be aware that some messages being sent can be irrecoverably deleted, in which case updateDeleteMessages will be received instead of this update
-//@message Contains information about the message which failed to send @old_message_id The previous temporary message identifier @error_code An error code @error_message Error message
+//@message The failed to send message @old_message_id The previous temporary message identifier @error_code An error code @error_message Error message
 updateMessageSendFailed message:message old_message_id:int53 error_code:int32 error_message:string = Update;
 
 //@description The message content has changed @chat_id Chat identifier @message_id Message identifier @new_content New message content
@@ -3659,8 +3713,8 @@ updateChatIsBlocked chat_id:int53 is_blocked:Bool = Update;
 //@description A chat's has_scheduled_messages field has changed @chat_id Chat identifier @has_scheduled_messages New value of has_scheduled_messages
 updateChatHasScheduledMessages chat_id:int53 has_scheduled_messages:Bool = Update;
 
-//@description A chat voice chat state has changed @chat_id Chat identifier @voice_chat New value of voice_chat
-updateChatVoiceChat chat_id:int53 voice_chat:voiceChat = Update;
+//@description A chat video chat state has changed @chat_id Chat identifier @video_chat New value of video_chat
+updateChatVideoChat chat_id:int53 video_chat:videoChat = Update;
 
 //@description The value of the default disable_notification parameter, used when a message is sent to the chat, was changed @chat_id Chat identifier @default_disable_notification The new default_disable_notification value
 updateChatDefaultDisableNotification chat_id:int53 default_disable_notification:Bool = Update;
@@ -3688,6 +3742,9 @@ updateChatActionBar chat_id:int53 action_bar:ChatActionBar = Update;
 
 //@description The chat theme was changed @chat_id Chat identifier @theme_name The new name of the chat theme; may be empty if theme was reset to default
 updateChatTheme chat_id:int53 theme_name:string = Update;
+
+//@description The chat pending join requests were changed @chat_id Chat identifier @pending_join_requests The new data about pending join requests; may be null
+updateChatPendingJoinRequests chat_id:int53 pending_join_requests:chatJoinRequestsInfo = Update;
 
 //@description The default chat reply markup was changed. Can occur because new messages with reply markup were received or because an old reply markup was hidden by the user
 //@chat_id Chat identifier @reply_markup_message_id Identifier of the message from which reply markup needs to be used; 0 if there is no default custom reply markup in the chat
@@ -3853,7 +3910,7 @@ updateAnimationSearchParameters provider:string emojis:vector<string> = Update;
 updateSuggestedActions added_actions:vector<SuggestedAction> removed_actions:vector<SuggestedAction> = Update;
 
 //@description A new incoming inline query; for bots only @id Unique query identifier @sender_user_id Identifier of the user who sent the query @user_location User location; may be null
-//@chat_type Contains information about the type of the chat, from which the query originated; may be null if unknown @query Text of the query @offset Offset of the first entry to return
+//@chat_type The type of the chat, from which the query originated; may be null if unknown @query Text of the query @offset Offset of the first entry to return
 updateNewInlineQuery id:int64 sender_user_id:int53 user_location:location chat_type:ChatType query:string offset:string = Update;
 
 //@description The user has chosen a result of an inline query; for bots only @sender_user_id Identifier of the user who sent the query @user_location User location; may be null
@@ -3892,6 +3949,9 @@ updatePollAnswer poll_id:int64 user_id:int53 option_ids:vector<int32> = Update;
 //@date Point in time (Unix timestamp) when the user rights was changed @invite_link If user has joined the chat using an invite link, the invite link; may be null
 //@old_chat_member Previous chat member @new_chat_member New chat member
 updateChatMember chat_id:int53 actor_user_id:int53 date:int32 invite_link:chatInviteLink old_chat_member:chatMember new_chat_member:chatMember = Update;
+
+//@description A user sent a join request to a chat; for bots only @chat_id Chat identifier @request Join request @invite_link The invite link, which was used to send join request; may be null
+updateNewChatJoinRequest chat_id:int53 request:chatJoinRequest invite_link:chatInviteLink = Update;
 
 
 //@description Contains a list of updates @updates List of updates
@@ -4082,7 +4142,7 @@ getMessage chat_id:int53 message_id:int53 = Message;
 getMessageLocally chat_id:int53 message_id:int53 = Message;
 
 //@description Returns information about a message that is replied by a given message. Also returns the pinned message, the game message, and the invoice message for messages of the types messagePinMessage, messageGameScore, and messagePaymentSuccessful respectively
-//@chat_id Identifier of the chat the message belongs to @message_id Identifier of the message reply to which to get
+//@chat_id Identifier of the chat the message belongs to @message_id Identifier of the reply message
 getRepliedMessage chat_id:int53 message_id:int53 = Message;
 
 //@description Returns information about a newest pinned message in the chat @chat_id Identifier of the chat the message belongs to
@@ -4197,7 +4257,7 @@ deleteChatHistory chat_id:int53 remove_from_chat_list:Bool revoke:Bool = Ok;
 deleteChat chat_id:int53 = Ok;
 
 //@description Searches for messages with given words in the chat. Returns the results in reverse chronological order, i.e. in order of decreasing message_id. Cannot be used in secret chats with a non-empty query
-//-(searchSecretMessages mmust be used instead), or without an enabled message database. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit
+//-(searchSecretMessages must be used instead), or without an enabled message database. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit
 //@chat_id Identifier of the chat in which to search messages
 //@query Query to search for
 //@sender Sender of messages to search for; pass null to search for messages from any sender. Not supported in secret chats
@@ -4245,6 +4305,20 @@ getActiveLiveLocationMessages = Messages;
 
 //@description Returns the last message sent in a chat no later than the specified date @chat_id Chat identifier @date Point in time (Unix timestamp) relative to which to search for messages
 getChatMessageByDate chat_id:int53 date:int32 = Message;
+
+//@description Returns sparse positions of messages of the specified type in the chat to be used for shared media scroll implementation. Returns the results in reverse chronological order (i.e., in order of decreasing message_id).
+//-Cannot be used in secret chats or with searchMessagesFilterFailedToSend filter without an enabled message database
+//@chat_id Identifier of the chat in which to return information about message positions
+//@filter Filter for message content. Filters searchMessagesFilterEmpty, searchMessagesFilterCall, searchMessagesFilterMissedCall, searchMessagesFilterMention and searchMessagesFilterUnreadMention are unsupported in this function
+//@from_message_id The message identifier from which to return information about message positions
+//@limit The expected number of message positions to be returned; 50-2000. A smaller number of positions can be returned, if there are not enough appropriate messages
+getChatSparseMessagePositions chat_id:int53 filter:SearchMessagesFilter from_message_id:int53 limit:int32 = MessagePositions;
+
+//@description Returns information about the next messages of the specified type in the chat splitted by days. Returns the results in reverse chronological order. Can return partial result for the last returned day. Behavior of this method depends on the value of the option "utc_time_offset"
+//@chat_id Identifier of the chat in which to return information about messages
+//@filter Filter for message content. Filters searchMessagesFilterEmpty, searchMessagesFilterCall, searchMessagesFilterMissedCall, searchMessagesFilterMention and searchMessagesFilterUnreadMention are unsupported in this function
+//@from_message_id The message identifier from which to return information about messages; use 0 to get results from the last message
+getChatMessageCalendar chat_id:int53 filter:SearchMessagesFilter from_message_id:int53 = MessageCalendar;
 
 //@description Returns approximate number of messages of the specified type in the chat @chat_id Identifier of the chat in which to count messages @filter Filter for message content; searchMessagesFilterEmpty is unsupported in this function @return_local If true, returns count that is available locally without sending network requests, returning -1 if the number of messages is unknown
 getChatMessageCount chat_id:int53 filter:SearchMessagesFilter return_local:Bool = Count;
@@ -4353,6 +4427,10 @@ deleteMessages chat_id:int53 message_ids:vector<int53> revoke:Bool = Ok;
 
 //@description Deletes all messages sent by the specified user to a chat. Supported only for supergroups; requires can_delete_messages administrator privileges @chat_id Chat identifier @user_id User identifier
 deleteChatMessagesFromUser chat_id:int53 user_id:int53 = Ok;
+
+//@description Deletes all messages between the specified dates in a chat. Supported only for private chats and basic groups. Messages sent in the last 30 seconds will not be deleted
+//@chat_id Chat identifier @min_date The minimum date of the messages to delete @max_date The maximum date of the messages to delete @revoke Pass true to try to delete chat messages for all users; private chats only
+deleteChatMessagesByDate chat_id:int53 min_date:int32 max_date:int32 revoke:Bool = Ok;
 
 
 //@description Edits the text of a message (or a text of a game message). Returns the edited message after the edit is completed on the server side
@@ -4694,7 +4772,7 @@ setChatDiscussionGroup chat_id:int53 discussion_chat_id:int53 = Ok;
 //@description Changes the location of a chat. Available only for some location-based supergroups, use supergroupFullInfo.can_set_location to check whether the method is allowed to use @chat_id Chat identifier @location New location for the chat; must be valid and not null
 setChatLocation chat_id:int53 location:chatLocation = Ok;
 
-//@description Changes the slow mode delay of a chat. Available only for supergroups; requires can_restrict_members rights @chat_id Chat identifier @slow_mode_delay New slow mode delay for the chat; must be one of 0, 10, 30, 60, 300, 900, 3600
+//@description Changes the slow mode delay of a chat. Available only for supergroups; requires can_restrict_members rights @chat_id Chat identifier @slow_mode_delay New slow mode delay for the chat, in seconds; must be one of 0, 10, 30, 60, 300, 900, 3600
 setChatSlowModeDelay chat_id:int53 slow_mode_delay:int32 = Ok;
 
 //@description Pins a message in a chat; requires can_pin_messages rights or can_edit_messages rights in the channel
@@ -4725,7 +4803,7 @@ addChatMember chat_id:int53 user_id:int53 forward_limit:int32 = Ok;
 //@chat_id Chat identifier @user_ids Identifiers of the users to be added to the chat. The maximum number of added users is 20 for supergroups and 100 for channels
 addChatMembers chat_id:int53 user_ids:vector<int53> = Ok;
 
-//@description Changes the status of a chat member, needs appropriate privileges. This function is currently not suitable for transferring chat ownership; use transferChatOwnership instead. Use addChatMember or banChatMember if you need to pass some additional parameters
+//@description Changes the status of a chat member, needs appropriate privileges. This function is currently not suitable for transferring chat ownership; use transferChatOwnership instead. Use addChatMember or banChatMember if some additional parameters needs to be passed
 //@chat_id Chat identifier @member_id Member identifier. Chats can be only banned and unbanned in supergroups and channels @status The new status of the member in the chat
 setChatMemberStatus chat_id:int53 member_id:MessageSender status:ChatMemberStatus = Ok;
 
@@ -4749,7 +4827,7 @@ getChatMember chat_id:int53 member_id:MessageSender = ChatMember;
 //@description Searches for a specified query in the first name, last name and username of the members of a specified chat. Requires administrator rights in channels
 //@chat_id Chat identifier
 //@query Query to search for
-//@limit The maximum number of users to be returned
+//@limit The maximum number of users to be returned; up to 200
 //@filter The type of users to search for; pass null to search among all chat members
 searchChatMembers chat_id:int53 query:string limit:int32 filter:ChatMembersFilter = ChatMembers;
 
@@ -4855,16 +4933,20 @@ replacePrimaryChatInviteLink chat_id:int53 = ChatInviteLink;
 
 //@description Creates a new invite link for a chat. Available for basic groups, supergroups, and channels. Requires administrator privileges and can_invite_users right in the chat
 //@chat_id Chat identifier
+//@name Invite link name; 0-32 characters
 //@expire_date Point in time (Unix timestamp) when the link will expire; pass 0 if never
 //@member_limit The maximum number of chat members that can join the chat by the link simultaneously; 0-99999; pass 0 if not limited
-createChatInviteLink chat_id:int53 expire_date:int32 member_limit:int32 = ChatInviteLink;
+//@creates_join_request True, if the link only creates join request. If true, member_limit must not be specified
+createChatInviteLink chat_id:int53 name:string expire_date:int32 member_limit:int32 creates_join_request:Bool = ChatInviteLink;
 
 //@description Edits a non-primary invite link for a chat. Available for basic groups, supergroups, and channels. Requires administrator privileges and can_invite_users right in the chat for own links and owner privileges for other links
 //@chat_id Chat identifier
 //@invite_link Invite link to be edited
+//@name Invite link name; 0-32 characters
 //@expire_date Point in time (Unix timestamp) when the link will expire; pass 0 if never
 //@member_limit The maximum number of chat members that can join the chat by the link simultaneously; 0-99999; pass 0 if not limited
-editChatInviteLink chat_id:int53 invite_link:string expire_date:int32 member_limit:int32 = ChatInviteLink;
+//@creates_join_request True, if the link only creates join request. If true, member_limit must not be specified
+editChatInviteLink chat_id:int53 invite_link:string name:string expire_date:int32 member_limit:int32 creates_join_request:Bool = ChatInviteLink;
 
 //@description Returns information about an invite link. Requires administrator privileges and can_invite_users right in the chat to get own links and owner privileges to get other links
 //@chat_id Chat identifier
@@ -4880,11 +4962,11 @@ getChatInviteLinkCounts chat_id:int53 = ChatInviteLinkCounts;
 //@is_revoked Pass true if revoked links needs to be returned instead of active or expired
 //@offset_date Creation date of an invite link starting after which to return invite links; use 0 to get results from the beginning
 //@offset_invite_link Invite link starting after which to return invite links; use empty string to get results from the beginning
-//@limit The maximum number of invite links to return
+//@limit The maximum number of invite links to return; up to 100
 getChatInviteLinks chat_id:int53 creator_user_id:int53 is_revoked:Bool offset_date:int32 offset_invite_link:string limit:int32 = ChatInviteLinks;
 
 //@description Returns chat members joined a chat by an invite link. Requires administrator privileges and can_invite_users right in the chat for own links and owner privileges for other links @chat_id Chat identifier @invite_link Invite link for which to return chat members
-//@offset_member A chat member from which to return next chat members; pass null to get results from the beginning @limit The maximum number of chat members to return
+//@offset_member A chat member from which to return next chat members; pass null to get results from the beginning @limit The maximum number of chat members to return; up to 100
 getChatInviteLinkMembers chat_id:int53 invite_link:string offset_member:chatInviteLinkMember limit:int32 = ChatInviteLinkMembers;
 
 //@description Revokes invite link for a chat. Available for basic groups, supergroups, and channels. Requires administrator privileges and can_invite_users right in the chat for own links and owner privileges for other links.
@@ -4907,11 +4989,25 @@ checkChatInviteLink invite_link:string = ChatInviteLinkInfo;
 //@description Uses an invite link to add the current user to the chat if possible @invite_link Invite link to use
 joinChatByInviteLink invite_link:string = Chat;
 
+//@description Returns pending join requests in a chat
+//@chat_id Chat identifier
+//@invite_link Invite link for which to return join requests. If empty, all join requests will be returned. Requires administrator privileges and can_invite_users right in the chat for own links and owner privileges for other links
+//@query A query to search for in the first names, last names and usernames of the users to return
+//@offset_request A chat join request from which to return next requests; pass null to get results from the beginning
+//@limit The maximum number of chat join requests to return
+getChatJoinRequests chat_id:int53 invite_link:string query:string offset_request:chatJoinRequest limit:int32 = ChatJoinRequests;
 
-//@description Creates a new call @user_id Identifier of the user to be called @protocol Description of the call protocols supported by the application @is_video True, if a video call needs to be created
+//@description Approves pending join request in a chat @chat_id Chat identifier @user_id Identifier of the user, which request will be approved
+approveChatJoinRequest chat_id:int53 user_id:int53 = Ok;
+
+//@description Declines pending join request in a chat @chat_id Chat identifier @user_id Identifier of the user, which request will be declined
+declineChatJoinRequest chat_id:int53 user_id:int53 = Ok;
+
+
+//@description Creates a new call @user_id Identifier of the user to be called @protocol The call protocols supported by the application @is_video True, if a video call needs to be created
 createCall user_id:int53 protocol:callProtocol is_video:Bool = CallId;
 
-//@description Accepts an incoming call @call_id Call identifier @protocol Description of the call protocols supported by the application
+//@description Accepts an incoming call @call_id Call identifier @protocol The call protocols supported by the application
 acceptCall call_id:int32 protocol:callProtocol = Ok;
 
 //@description Sends call signaling data @call_id Call identifier @data The data
@@ -4927,17 +5023,17 @@ sendCallRating call_id:int32 rating:int32 comment:string problems:vector<CallPro
 sendCallDebugInformation call_id:int32 debug_information:string = Ok;
 
 
-//@description Returns list of participant identifiers, which can be used to join voice chats in a chat @chat_id Chat identifier
-getVoiceChatAvailableParticipants chat_id:int53 = MessageSenders;
+//@description Returns list of participant identifiers, which can be used to join video chats in a chat @chat_id Chat identifier
+getVideoChatAvailableParticipants chat_id:int53 = MessageSenders;
 
-//@description Changes default participant identifier, which can be used to join voice chats in a chat @chat_id Chat identifier @default_participant_id Default group call participant identifier to join the voice chats
-setVoiceChatDefaultParticipant chat_id:int53 default_participant_id:MessageSender = Ok;
+//@description Changes default participant identifier, which can be used to join video chats in a chat @chat_id Chat identifier @default_participant_id Default group call participant identifier to join the video chats
+setVideoChatDefaultParticipant chat_id:int53 default_participant_id:MessageSender = Ok;
 
-//@description Creates a voice chat (a group call bound to a chat). Available only for basic groups, supergroups and channels; requires can_manage_voice_chats rights
-//@chat_id Chat identifier, in which the voice chat will be created
+//@description Creates a video chat (a group call bound to a chat). Available only for basic groups, supergroups and channels; requires can_manage_video_chats rights
+//@chat_id Chat identifier, in which the video chat will be created
 //@title Group call title; if empty, chat title will be used
-//@start_date Point in time (Unix timestamp) when the group call is supposed to be started by an administrator; 0 to start the voice chat immediately. The date must be at least 10 seconds and at most 8 days in the future
-createVoiceChat chat_id:int53 title:string start_date:int32 = GroupCallId;
+//@start_date Point in time (Unix timestamp) when the group call is supposed to be started by an administrator; 0 to start the video chat immediately. The date must be at least 10 seconds and at most 8 days in the future
+createVideoChat chat_id:int53 title:string start_date:int32 = GroupCallId;
 
 //@description Returns information about a group call @group_call_id Group call identifier
 getGroupCall group_call_id:int32 = GroupCall;
@@ -4951,7 +5047,7 @@ toggleGroupCallEnabledStartNotification group_call_id:int32 enabled_start_notifi
 
 //@description Joins an active group call. Returns join response payload for tgcalls
 //@group_call_id Group call identifier
-//@participant_id Identifier of a group call participant, which will be used to join the call; pass null to join as self; voice chats only
+//@participant_id Identifier of a group call participant, which will be used to join the call; pass null to join as self; video chats only
 //@audio_source_id Caller audio channel synchronization source identifier; received from tgcalls
 //@payload Group call join payload; received from tgcalls
 //@is_muted True, if the user's microphone is muted
@@ -4981,11 +5077,11 @@ toggleGroupCallMuteNewParticipants group_call_id:int32 mute_new_participants:Boo
 //@description Revokes invite link for a group call. Requires groupCall.can_be_managed group call flag @group_call_id Group call identifier
 revokeGroupCallInviteLink group_call_id:int32 = Ok;
 
-//@description Invites users to an active group call. Sends a service message of type messageInviteToGroupCall for voice chats
+//@description Invites users to an active group call. Sends a service message of type messageInviteToGroupCall for video chats
 //@group_call_id Group call identifier @user_ids User identifiers. At most 10 users can be invited simultaneously
 inviteGroupCallParticipants group_call_id:int32 user_ids:vector<int53> = Ok;
 
-//@description Returns invite link to a voice chat in a public chat
+//@description Returns invite link to a video chat in a public chat
 //@group_call_id Group call identifier
 //@can_self_unmute Pass true if the invite link needs to contain an invite hash, passing which to joinGroupCall would allow the invited user to unmute themselves. Requires groupCall.can_be_managed group call flag
 getGroupCallInviteLink group_call_id:int32 can_self_unmute:Bool = HttpUrl;
@@ -5022,7 +5118,7 @@ toggleGroupCallParticipantIsHandRaised group_call_id:int32 participant_id:Messag
 
 //@description Loads more participants of a group call. The loaded participants will be received through updates. Use the field groupCall.loaded_all_participants to check whether all participants has already been loaded
 //@group_call_id Group call identifier. The group call must be previously received through getGroupCall and must be joined or being joined
-//@limit The maximum number of participants to load
+//@limit The maximum number of participants to load; up to 100
 loadGroupCallParticipants group_call_id:int32 limit:int32 = Ok;
 
 //@description Leaves a group call @group_call_id Group call identifier
@@ -5098,12 +5194,12 @@ searchStickers emoji:string limit:int32 = Stickers;
 //@description Returns a list of installed sticker sets @is_masks Pass true to return mask sticker sets; pass false to return ordinary sticker sets
 getInstalledStickerSets is_masks:Bool = StickerSets;
 
-//@description Returns a list of archived sticker sets @is_masks Pass true to return mask stickers sets; pass false to return ordinary sticker sets @offset_sticker_set_id Identifier of the sticker set from which to return the result @limit The maximum number of sticker sets to return
+//@description Returns a list of archived sticker sets @is_masks Pass true to return mask stickers sets; pass false to return ordinary sticker sets @offset_sticker_set_id Identifier of the sticker set from which to return the result @limit The maximum number of sticker sets to return; up to 100
 getArchivedStickerSets is_masks:Bool offset_sticker_set_id:int64 limit:int32 = StickerSets;
 
 //@description Returns a list of trending sticker sets. For optimal performance, the number of returned sticker sets is chosen by TDLib
 //@offset The offset from which to return the sticker sets; must be non-negative
-//@limit The maximum number of sticker sets to be returned; must be non-negative. For optimal performance, the number of returned sticker sets is chosen by TDLib and can be smaller than the specified limit, even if the end of the list has not been reached
+//@limit The maximum number of sticker sets to be returned; up to 100. For optimal performance, the number of returned sticker sets is chosen by TDLib and can be smaller than the specified limit, even if the end of the list has not been reached
 getTrendingStickerSets offset:int32 limit:int32 = StickerSets;
 
 //@description Returns a list of sticker sets attached to a file. Currently only photos and videos can have attached sticker sets @file_id File identifier
@@ -5158,6 +5254,9 @@ getStickerEmojis sticker:InputFile = Emojis;
 
 //@description Searches for emojis by keywords. Supported only if the file database is enabled @text Text to search for @exact_match True, if only emojis, which exactly match text needs to be returned @input_language_codes List of possible IETF language tags of the user's input language; may be empty if unknown
 searchEmojis text:string exact_match:Bool input_language_codes:vector<string> = Emojis;
+
+//@description Returns an animated emoji corresponding to a given emoji. Returns a 404 error if the emoji has no animated emoji @emoji The emoji
+getAnimatedEmoji emoji:string = AnimatedEmoji;
 
 //@description Returns an HTTP URL which can be used to automatically log in to the translation platform and suggest new emoji replacements. The URL will be valid for 30 seconds after generation @language_code Language code for which the emoji replacements will be suggested
 getEmojiSuggestionsUrl language_code:string = HttpUrl;
