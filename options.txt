@@ -1,5 +1,6 @@
 always_parse_markdown	Boolean	Yes	If true, text entities will be automatically parsed in all inputMessageText objects
 archive_and_mute_new_chats_from_unknown_users	Boolean	Yes	If true, new chats from non-contacts will be automatically archived and muted. The option can be set only if the option “can_archive_and_mute_new_chats_from_unknown_users” is true. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device
+disable_animated_emoji	Boolean	Yes	If true, animated emoji will be disabled and shown as plain emoji
 disable_contact_registered_notifications	Boolean	Yes	If true, notifications about the user's contacts who have joined Telegram will be disabled. User will still receive the corresponding message in the private chat. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device
 disable_persistent_network_statistics	Boolean	Yes	If true, persistent network statistics will be disabled, which significantly reduces disk usage
 disable_sent_scheduled_message_notifications	Boolean	Yes	If true, notifications about outgoing scheduled messages that were sent will be disabled
@@ -10,7 +11,7 @@ ignore_default_disable_notification	Boolean	Yes	If true, the disable_notificatio
 ignore_inline_thumbnails	Boolean	Yes	If true, prevents file thumbnails sent by the server along with messages from being saved on the disk
 ignore_platform_restrictions	Boolean	Yes	If true, chat and message restrictions specific to the currently used operating system will be ignored
 ignore_sensitive_content_restrictions	Boolean	Yes	If true, sensitive content will be shown on all user devices. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device
-is_location_visible	Boolean	Yes	If true, other users will be allowed to see the current user's location
+is_location_visible	Boolean	Yes	If true, other users will be allowed to see the current user's location. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device
 language_pack_database_path	String	Yes	Path to a database for storing language pack strings, so that this database can be shared between different accounts. By default, language pack strings are stored only in memory. Changes of value of this option will be applied only after TDLib restart, so it should be set before call to setTdlibParameters.
 language_pack_id	String	Yes	Identifier of the currently used language pack from the current localization target
 localization_target	String	Yes	Name for the current localization target (currently supported: “android”, “android_x”, “ios”, “macos” and “tdesktop”)
@@ -22,14 +23,16 @@ prefer_ipv6	Boolean	Yes	If true, IPv6 addresses will be preferred over IPv4 addr
 use_pfs	Boolean	Yes	If true, Perfect Forward Secrecy will be enabled for interaction with the Telegram servers for cloud chats
 use_quick_ack	Boolean	Yes	If true, quick acknowledgement will be enabled for outgoing messages
 use_storage_optimizer	Boolean	Yes	If true, the background storage optimizer will be enabled
-animated_emoji_sticker_set_name	String	No	Name of a sticker set with animated emojis
+utc_time_offset	Integer	Yes	A UTC time offset used for splitting messages by days. The option is reset automatically on each TDLib instance launch, so it needs to be set manually only if the time offset is changed during execution.
 animation_search_bot_username	String	No	Username of a bot which can be used in inline mode for animations search
+authentication_token	String	No	An authentication token to be used on subsequent authorizations and received when logging out
 authorization_date	Integer	No	Point in time (Unix timestamp) when authorization was received
 basic_group_size_max	Integer	No	Maximum number of members in a basic group
 call_connect_timeout_ms	Integer	No	Maximum time to wait for call connection creation to be passed to libtgvoip
 call_packet_timeout_ms	Integer	No	Maximum time to wait for call packet delivery to be passed to libtgvoip
 can_archive_and_mute_new_chats_from_unknown_users	Boolean	No	If true, the option “archive_and_mute_new_chats_from_unknown_users” can be changed
 can_ignore_sensitive_content_restrictions	Boolean	No	If true, the option “ignore_sensitive_content_restrictions” can be changed
+channel_bot_user_id	Integer	No	Identifier of the bot which is shown as the sender of messages sent on behalf of channels when viewed from an outdated client
 enabled_proxy_id	Integer	No	Identifier of the enabled proxy
 expect_blocking	Boolean	No	If true, access to Telegram is likely blocked for the user
 favorite_stickers_limit	Integer	No	Maximum number of favorite stickers
@@ -43,6 +46,9 @@ pinned_chat_count_max	Integer	No	Maximum number of pinned cloud chats in the Mai
 photo_search_bot_username	String	No	Username of a bot which can be used in inline mode for photos search
 replies_bot_chat_id	Integer	No	Identifier of the @replies bot
 suggested_language_pack_id	String	No	Identifier of the language pack, suggested for the user by the server
+suggested_video_note_audio_bitrate	String	No	Suggested bit rate for audio encoding in video notes
+suggested_video_note_length	String	No	Suggested width and height of the video in video notes
+suggested_video_note_video_bitrate	String	No	Suggested bit rate for video encoding in video notes
 supergroup_size_max	Integer	No	Maximum number of members in a supergroup
 t_me_url	String	No	Current value of t.me URL, i.e. https://t.me/
 telegram_service_notifications_chat_id	Integer	No	Identifier of the Telegram Service Notifications chat

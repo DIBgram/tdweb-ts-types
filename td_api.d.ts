@@ -15241,6 +15241,9 @@ namespace TdApi {
         /** If true, new chats from non-contacts will be automatically archived and muted. The option can be set only if the option “can_archive_and_mute_new_chats_from_unknown_users” is true. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         archive_and_mute_new_chats_from_unknown_users?: td_optionValueBoolean;
 
+        /** If true, animated emoji will be disabled and shown as plain emoji */
+        disable_animated_emoji?: td_optionValueBoolean;
+
         /** If true, notifications about the user's contacts who have joined Telegram will be disabled. User will still receive the corresponding message in the private chat. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         disable_contact_registered_notifications?: td_optionValueBoolean;
 
@@ -15271,7 +15274,7 @@ namespace TdApi {
         /** If true, sensitive content will be shown on all user devices. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         ignore_sensitive_content_restrictions?: td_optionValueBoolean;
 
-        /** If true, other users will be allowed to see the current user's location */
+        /** If true, other users will be allowed to see the current user's location. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         is_location_visible?: td_optionValueBoolean;
 
         /** Path to a database for storing language pack strings, so that this database can be shared between different accounts. By default, language pack strings are stored only in memory. Changes of value of this option will be applied only after TDLib restart, so it should be set before call to setTdlibParameters. */
@@ -15307,11 +15310,14 @@ namespace TdApi {
         /** If true, the background storage optimizer will be enabled */
         use_storage_optimizer?: td_optionValueBoolean;
 
-        /** Name of a sticker set with animated emojis */
-        animated_emoji_sticker_set_name?: td_optionValueString;
+        /** A UTC time offset used for splitting messages by days. The option is reset automatically on each TDLib instance launch, so it needs to be set manually only if the time offset is changed during execution. */
+        utc_time_offset?: td_optionValueInteger;
 
         /** Username of a bot which can be used in inline mode for animations search */
         animation_search_bot_username?: td_optionValueString;
+
+        /** An authentication token to be used on subsequent authorizations and received when logging out */
+        authentication_token?: td_optionValueString;
 
         /** Point in time (Unix timestamp) when authorization was received */
         authorization_date?: td_optionValueInteger;
@@ -15330,6 +15336,9 @@ namespace TdApi {
 
         /** If true, the option “ignore_sensitive_content_restrictions” can be changed */
         can_ignore_sensitive_content_restrictions?: td_optionValueBoolean;
+
+        /** Identifier of the bot which is shown as the sender of messages sent on behalf of channels when viewed from an outdated client */
+        channel_bot_user_id?: td_optionValueInteger;
 
         /** Identifier of the enabled proxy */
         enabled_proxy_id?: td_optionValueInteger;
@@ -15370,6 +15379,15 @@ namespace TdApi {
         /** Identifier of the language pack, suggested for the user by the server */
         suggested_language_pack_id?: td_optionValueString;
 
+        /** Suggested bit rate for audio encoding in video notes */
+        suggested_video_note_audio_bitrate?: td_optionValueString;
+
+        /** Suggested width and height of the video in video notes */
+        suggested_video_note_length?: td_optionValueString;
+
+        /** Suggested bit rate for video encoding in video notes */
+        suggested_video_note_video_bitrate?: td_optionValueString;
+
         /** Maximum number of members in a supergroup */
         supergroup_size_max?: td_optionValueInteger;
 
@@ -15402,6 +15420,9 @@ namespace TdApi {
         /** If true, new chats from non-contacts will be automatically archived and muted. The option can be set only if the option “can_archive_and_mute_new_chats_from_unknown_users” is true. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         archive_and_mute_new_chats_from_unknown_users?: td_Bool;
 
+        /** If true, animated emoji will be disabled and shown as plain emoji */
+        disable_animated_emoji?: td_Bool;
+
         /** If true, notifications about the user's contacts who have joined Telegram will be disabled. User will still receive the corresponding message in the private chat. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         disable_contact_registered_notifications?: td_Bool;
 
@@ -15432,7 +15453,7 @@ namespace TdApi {
         /** If true, sensitive content will be shown on all user devices. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         ignore_sensitive_content_restrictions?: td_Bool;
 
-        /** If true, other users will be allowed to see the current user's location */
+        /** If true, other users will be allowed to see the current user's location. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
         is_location_visible?: td_Bool;
 
         /** Path to a database for storing language pack strings, so that this database can be shared between different accounts. By default, language pack strings are stored only in memory. Changes of value of this option will be applied only after TDLib restart, so it should be set before call to setTdlibParameters. */
@@ -15468,11 +15489,14 @@ namespace TdApi {
         /** If true, the background storage optimizer will be enabled */
         use_storage_optimizer?: td_Bool;
 
-        /** Name of a sticker set with animated emojis */
-        animated_emoji_sticker_set_name?: td_string;
+        /** A UTC time offset used for splitting messages by days. The option is reset automatically on each TDLib instance launch, so it needs to be set manually only if the time offset is changed during execution. */
+        utc_time_offset?: td_int64;
 
         /** Username of a bot which can be used in inline mode for animations search */
         animation_search_bot_username?: td_string;
+
+        /** An authentication token to be used on subsequent authorizations and received when logging out */
+        authentication_token?: td_string;
 
         /** Point in time (Unix timestamp) when authorization was received */
         authorization_date?: td_int64;
@@ -15491,6 +15515,9 @@ namespace TdApi {
 
         /** If true, the option “ignore_sensitive_content_restrictions” can be changed */
         can_ignore_sensitive_content_restrictions?: td_Bool;
+
+        /** Identifier of the bot which is shown as the sender of messages sent on behalf of channels when viewed from an outdated client */
+        channel_bot_user_id?: td_int64;
 
         /** Identifier of the enabled proxy */
         enabled_proxy_id?: td_int64;
@@ -15531,6 +15558,15 @@ namespace TdApi {
         /** Identifier of the language pack, suggested for the user by the server */
         suggested_language_pack_id?: td_string;
 
+        /** Suggested bit rate for audio encoding in video notes */
+        suggested_video_note_audio_bitrate?: td_string;
+
+        /** Suggested width and height of the video in video notes */
+        suggested_video_note_length?: td_string;
+
+        /** Suggested bit rate for video encoding in video notes */
+        suggested_video_note_video_bitrate?: td_string;
+
         /** Maximum number of members in a supergroup */
         supergroup_size_max?: td_int64;
 
@@ -15553,13 +15589,14 @@ namespace TdApi {
         version?: td_string;
     }
 
-    export type TdOptionKey= 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | 'animated_emoji_sticker_set_name' | 'animation_search_bot_username' | 'authorization_date' | 'basic_group_size_max' | 'call_connect_timeout_ms' | 'call_packet_timeout_ms' | 'can_archive_and_mute_new_chats_from_unknown_users' | 'can_ignore_sensitive_content_restrictions' | 'enabled_proxy_id' | 'expect_blocking' | 'favorite_stickers_limit' | 'forwarded_message_count_max' | 'group_anonymous_bot_user_id' | 'message_caption_length_max' | 'message_text_length_max' | 'my_id' | 'pinned_archived_chat_count_max' | 'pinned_chat_count_max' | 'photo_search_bot_username' | 'replies_bot_chat_id' | 'suggested_language_pack_id' | 'supergroup_size_max' | 't_me_url' | 'telegram_service_notifications_chat_id' | 'test_mode' | 'unix_time' | 'venue_search_bot_username' | 'version' | `x-${string}` | `X-${string}`;
+    export type TdOptionKey= 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_animated_emoji' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | 'utc_time_offset' | 'animation_search_bot_username' | 'authentication_token' | 'authorization_date' | 'basic_group_size_max' | 'call_connect_timeout_ms' | 'call_packet_timeout_ms' | 'can_archive_and_mute_new_chats_from_unknown_users' | 'can_ignore_sensitive_content_restrictions' | 'channel_bot_user_id' | 'enabled_proxy_id' | 'expect_blocking' | 'favorite_stickers_limit' | 'forwarded_message_count_max' | 'group_anonymous_bot_user_id' | 'message_caption_length_max' | 'message_text_length_max' | 'my_id' | 'pinned_archived_chat_count_max' | 'pinned_chat_count_max' | 'photo_search_bot_username' | 'replies_bot_chat_id' | 'suggested_language_pack_id' | 'suggested_video_note_audio_bitrate' | 'suggested_video_note_length' | 'suggested_video_note_video_bitrate' | 'supergroup_size_max' | 't_me_url' | 'telegram_service_notifications_chat_id' | 'test_mode' | 'unix_time' | 'venue_search_bot_username' | 'version' | `x-${string}` | `X-${string}`;
 
-    export type TdOptionKey_writable = 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | `x-${string}` | `X-${string}`;
+    export type TdOptionKey_writable = 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_animated_emoji' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | 'utc_time_offset' | `x-${string}` | `X-${string}`;
 
     export type TdOptionType<T extends TdOptionKey | TdOptionKey_writable, U extends T>=
         U extends "always_parse_markdown" ? td_optionValueBoolean :
         U extends "archive_and_mute_new_chats_from_unknown_users" ? td_optionValueBoolean :
+        U extends "disable_animated_emoji" ? td_optionValueBoolean :
         U extends "disable_contact_registered_notifications" ? td_optionValueBoolean :
         U extends "disable_persistent_network_statistics" ? td_optionValueBoolean :
         U extends "disable_sent_scheduled_message_notifications" ? td_optionValueBoolean :
@@ -15582,14 +15619,16 @@ namespace TdApi {
         U extends "use_pfs" ? td_optionValueBoolean :
         U extends "use_quick_ack" ? td_optionValueBoolean :
         U extends "use_storage_optimizer" ? td_optionValueBoolean :
-        U extends "animated_emoji_sticker_set_name" ? td_optionValueString :
+        U extends "utc_time_offset" ? td_optionValueInteger :
         U extends "animation_search_bot_username" ? td_optionValueString :
+        U extends "authentication_token" ? td_optionValueString :
         U extends "authorization_date" ? td_optionValueInteger :
         U extends "basic_group_size_max" ? td_optionValueInteger :
         U extends "call_connect_timeout_ms" ? td_optionValueInteger :
         U extends "call_packet_timeout_ms" ? td_optionValueInteger :
         U extends "can_archive_and_mute_new_chats_from_unknown_users" ? td_optionValueBoolean :
         U extends "can_ignore_sensitive_content_restrictions" ? td_optionValueBoolean :
+        U extends "channel_bot_user_id" ? td_optionValueInteger :
         U extends "enabled_proxy_id" ? td_optionValueInteger :
         U extends "expect_blocking" ? td_optionValueBoolean :
         U extends "favorite_stickers_limit" ? td_optionValueInteger :
@@ -15603,6 +15642,9 @@ namespace TdApi {
         U extends "photo_search_bot_username" ? td_optionValueString :
         U extends "replies_bot_chat_id" ? td_optionValueInteger :
         U extends "suggested_language_pack_id" ? td_optionValueString :
+        U extends "suggested_video_note_audio_bitrate" ? td_optionValueString :
+        U extends "suggested_video_note_length" ? td_optionValueString :
+        U extends "suggested_video_note_video_bitrate" ? td_optionValueString :
         U extends "supergroup_size_max" ? td_optionValueInteger :
         U extends "t_me_url" ? td_optionValueString :
         U extends "telegram_service_notifications_chat_id" ? td_optionValueInteger :
