@@ -15232,5 +15232,385 @@ namespace TdApi {
         t extends td_updateNewChatJoinRequest ? "updateNewChatJoinRequest" :
         t extends td_updateFatalError ? "updateFatalError" :
         never;
+
+    /** Dictionary which contains TDLib options, suitable for a global options storage */
+    export interface TdOptions { 
+        /** If true, text entities will be automatically parsed in all inputMessageText objects */
+        always_parse_markdown?: td_optionValueBoolean;
+
+        /** If true, new chats from non-contacts will be automatically archived and muted. The option can be set only if the option “can_archive_and_mute_new_chats_from_unknown_users” is true. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        archive_and_mute_new_chats_from_unknown_users?: td_optionValueBoolean;
+
+        /** If true, notifications about the user's contacts who have joined Telegram will be disabled. User will still receive the corresponding message in the private chat. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        disable_contact_registered_notifications?: td_optionValueBoolean;
+
+        /** If true, persistent network statistics will be disabled, which significantly reduces disk usage */
+        disable_persistent_network_statistics?: td_optionValueBoolean;
+
+        /** If true, notifications about outgoing scheduled messages that were sent will be disabled */
+        disable_sent_scheduled_message_notifications?: td_optionValueBoolean;
+
+        /** If true, protection from external time adjustment will be disabled, which significantly reduces disk usage */
+        disable_time_adjustment_protection?: td_optionValueBoolean;
+
+        /** If true, support for top chats and statistics collection is disabled */
+        disable_top_chats?: td_optionValueBoolean;
+
+        /** If true, allows to skip all updates received while the TDLib instance was not running. The option does nothing if the database or secret chats are used */
+        ignore_background_updates?: td_optionValueBoolean;
+
+        /** If true, the disable_notification value specified in the request will be always used instead of the default value */
+        ignore_default_disable_notification?: td_optionValueBoolean;
+
+        /** If true, prevents file thumbnails sent by the server along with messages from being saved on the disk */
+        ignore_inline_thumbnails?: td_optionValueBoolean;
+
+        /** If true, chat and message restrictions specific to the currently used operating system will be ignored */
+        ignore_platform_restrictions?: td_optionValueBoolean;
+
+        /** If true, sensitive content will be shown on all user devices. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        ignore_sensitive_content_restrictions?: td_optionValueBoolean;
+
+        /** If true, other users will be allowed to see the current user's location */
+        is_location_visible?: td_optionValueBoolean;
+
+        /** Path to a database for storing language pack strings, so that this database can be shared between different accounts. By default, language pack strings are stored only in memory. Changes of value of this option will be applied only after TDLib restart, so it should be set before call to setTdlibParameters. */
+        language_pack_database_path?: td_optionValueString;
+
+        /** Identifier of the currently used language pack from the current localization target */
+        language_pack_id?: td_optionValueString;
+
+        /** Name for the current localization target (currently supported: “android”, “android_x”, “ios”, “macos” and “tdesktop”) */
+        localization_target?: td_optionValueString;
+
+        /** The maximum time messages are stored in memory before they are unloaded, 60-86400; in seconds. Defaults to 60 for users and 1800 for bots */
+        message_unload_delay?: td_optionValueInteger;
+
+        /** Maximum number of notification groups to be shown simultaneously, 0-25 */
+        notification_group_count_max?: td_optionValueInteger;
+
+        /** Maximum number of simultaneously shown notifications in a group, 1-25. Defaults to 10 */
+        notification_group_size_max?: td_optionValueInteger;
+
+        /** Online status of the current user */
+        online?: td_optionValueBoolean;
+
+        /** If true, IPv6 addresses will be preferred over IPv4 addresses */
+        prefer_ipv6?: td_optionValueBoolean;
+
+        /** If true, Perfect Forward Secrecy will be enabled for interaction with the Telegram servers for cloud chats */
+        use_pfs?: td_optionValueBoolean;
+
+        /** If true, quick acknowledgement will be enabled for outgoing messages */
+        use_quick_ack?: td_optionValueBoolean;
+
+        /** If true, the background storage optimizer will be enabled */
+        use_storage_optimizer?: td_optionValueBoolean;
+
+        /** Name of a sticker set with animated emojis */
+        animated_emoji_sticker_set_name?: td_optionValueString;
+
+        /** Username of a bot which can be used in inline mode for animations search */
+        animation_search_bot_username?: td_optionValueString;
+
+        /** Point in time (Unix timestamp) when authorization was received */
+        authorization_date?: td_optionValueInteger;
+
+        /** Maximum number of members in a basic group */
+        basic_group_size_max?: td_optionValueInteger;
+
+        /** Maximum time to wait for call connection creation to be passed to libtgvoip */
+        call_connect_timeout_ms?: td_optionValueInteger;
+
+        /** Maximum time to wait for call packet delivery to be passed to libtgvoip */
+        call_packet_timeout_ms?: td_optionValueInteger;
+
+        /** If true, the option “archive_and_mute_new_chats_from_unknown_users” can be changed */
+        can_archive_and_mute_new_chats_from_unknown_users?: td_optionValueBoolean;
+
+        /** If true, the option “ignore_sensitive_content_restrictions” can be changed */
+        can_ignore_sensitive_content_restrictions?: td_optionValueBoolean;
+
+        /** Identifier of the enabled proxy */
+        enabled_proxy_id?: td_optionValueInteger;
+
+        /** If true, access to Telegram is likely blocked for the user */
+        expect_blocking?: td_optionValueBoolean;
+
+        /** Maximum number of favorite stickers */
+        favorite_stickers_limit?: td_optionValueInteger;
+
+        /** Maximum number of forwarded messages per one request */
+        forwarded_message_count_max?: td_optionValueInteger;
+
+        /** Identifier of the bot which is shown as the sender of anonymous messages in groups when viewed from an outdated client */
+        group_anonymous_bot_user_id?: td_optionValueInteger;
+
+        /** Maximum length of a message caption */
+        message_caption_length_max?: td_optionValueInteger;
+
+        /** Maximum length of a message text */
+        message_text_length_max?: td_optionValueInteger;
+
+        /** Identifier of the current user */
+        my_id?: td_optionValueInteger;
+
+        /** Maximum number of pinned cloud chats in the Archive chat list. The same amount of secret chats can be pinned locally */
+        pinned_archived_chat_count_max?: td_optionValueInteger;
+
+        /** Maximum number of pinned cloud chats in the Main chat list. The same amount of secret chats can be pinned locally */
+        pinned_chat_count_max?: td_optionValueInteger;
+
+        /** Username of a bot which can be used in inline mode for photos search */
+        photo_search_bot_username?: td_optionValueString;
+
+        /** Identifier of the @replies bot */
+        replies_bot_chat_id?: td_optionValueInteger;
+
+        /** Identifier of the language pack, suggested for the user by the server */
+        suggested_language_pack_id?: td_optionValueString;
+
+        /** Maximum number of members in a supergroup */
+        supergroup_size_max?: td_optionValueInteger;
+
+        /** Current value of t.me URL, i.e. https://t.me/ */
+        t_me_url?: td_optionValueString;
+
+        /** Identifier of the Telegram Service Notifications chat */
+        telegram_service_notifications_chat_id?: td_optionValueInteger;
+
+        /** If true, the test environment is being used instead of the production environment */
+        test_mode?: td_optionValueBoolean;
+
+        /** An estimation of the current Unix timestamp. The option will not be updated automatically unless the difference between the previous estimation and the locally available monotonic clocks changes significantly */
+        unix_time?: td_optionValueInteger;
+
+        /** Username of a bot which can be used in inline mode for venues search */
+        venue_search_bot_username?: td_optionValueString;
+
+        /** TDLib version. This options is guaranteed to come before all other updates since TDLib 1.4.0 */
+        version?: td_optionValueString;
+
+        [key: string]: td_OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
+    }
+    
+    /** Similar to `TdOptions` but contains the values themselves instead of `OptionValue`. */
+    export interface TdOptions_pure {
+        /** If true, text entities will be automatically parsed in all inputMessageText objects */
+        always_parse_markdown?: td_Bool;
+
+        /** If true, new chats from non-contacts will be automatically archived and muted. The option can be set only if the option “can_archive_and_mute_new_chats_from_unknown_users” is true. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        archive_and_mute_new_chats_from_unknown_users?: td_Bool;
+
+        /** If true, notifications about the user's contacts who have joined Telegram will be disabled. User will still receive the corresponding message in the private chat. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        disable_contact_registered_notifications?: td_Bool;
+
+        /** If true, persistent network statistics will be disabled, which significantly reduces disk usage */
+        disable_persistent_network_statistics?: td_Bool;
+
+        /** If true, notifications about outgoing scheduled messages that were sent will be disabled */
+        disable_sent_scheduled_message_notifications?: td_Bool;
+
+        /** If true, protection from external time adjustment will be disabled, which significantly reduces disk usage */
+        disable_time_adjustment_protection?: td_Bool;
+
+        /** If true, support for top chats and statistics collection is disabled */
+        disable_top_chats?: td_Bool;
+
+        /** If true, allows to skip all updates received while the TDLib instance was not running. The option does nothing if the database or secret chats are used */
+        ignore_background_updates?: td_Bool;
+
+        /** If true, the disable_notification value specified in the request will be always used instead of the default value */
+        ignore_default_disable_notification?: td_Bool;
+
+        /** If true, prevents file thumbnails sent by the server along with messages from being saved on the disk */
+        ignore_inline_thumbnails?: td_Bool;
+
+        /** If true, chat and message restrictions specific to the currently used operating system will be ignored */
+        ignore_platform_restrictions?: td_Bool;
+
+        /** If true, sensitive content will be shown on all user devices. getOption needs to be called explicitly to fetch the latest value of the option, changed from another device */
+        ignore_sensitive_content_restrictions?: td_Bool;
+
+        /** If true, other users will be allowed to see the current user's location */
+        is_location_visible?: td_Bool;
+
+        /** Path to a database for storing language pack strings, so that this database can be shared between different accounts. By default, language pack strings are stored only in memory. Changes of value of this option will be applied only after TDLib restart, so it should be set before call to setTdlibParameters. */
+        language_pack_database_path?: td_string;
+
+        /** Identifier of the currently used language pack from the current localization target */
+        language_pack_id?: td_string;
+
+        /** Name for the current localization target (currently supported: “android”, “android_x”, “ios”, “macos” and “tdesktop”) */
+        localization_target?: td_string;
+
+        /** The maximum time messages are stored in memory before they are unloaded, 60-86400; in seconds. Defaults to 60 for users and 1800 for bots */
+        message_unload_delay?: td_int64;
+
+        /** Maximum number of notification groups to be shown simultaneously, 0-25 */
+        notification_group_count_max?: td_int64;
+
+        /** Maximum number of simultaneously shown notifications in a group, 1-25. Defaults to 10 */
+        notification_group_size_max?: td_int64;
+
+        /** Online status of the current user */
+        online?: td_Bool;
+
+        /** If true, IPv6 addresses will be preferred over IPv4 addresses */
+        prefer_ipv6?: td_Bool;
+
+        /** If true, Perfect Forward Secrecy will be enabled for interaction with the Telegram servers for cloud chats */
+        use_pfs?: td_Bool;
+
+        /** If true, quick acknowledgement will be enabled for outgoing messages */
+        use_quick_ack?: td_Bool;
+
+        /** If true, the background storage optimizer will be enabled */
+        use_storage_optimizer?: td_Bool;
+
+        /** Name of a sticker set with animated emojis */
+        animated_emoji_sticker_set_name?: td_string;
+
+        /** Username of a bot which can be used in inline mode for animations search */
+        animation_search_bot_username?: td_string;
+
+        /** Point in time (Unix timestamp) when authorization was received */
+        authorization_date?: td_int64;
+
+        /** Maximum number of members in a basic group */
+        basic_group_size_max?: td_int64;
+
+        /** Maximum time to wait for call connection creation to be passed to libtgvoip */
+        call_connect_timeout_ms?: td_int64;
+
+        /** Maximum time to wait for call packet delivery to be passed to libtgvoip */
+        call_packet_timeout_ms?: td_int64;
+
+        /** If true, the option “archive_and_mute_new_chats_from_unknown_users” can be changed */
+        can_archive_and_mute_new_chats_from_unknown_users?: td_Bool;
+
+        /** If true, the option “ignore_sensitive_content_restrictions” can be changed */
+        can_ignore_sensitive_content_restrictions?: td_Bool;
+
+        /** Identifier of the enabled proxy */
+        enabled_proxy_id?: td_int64;
+
+        /** If true, access to Telegram is likely blocked for the user */
+        expect_blocking?: td_Bool;
+
+        /** Maximum number of favorite stickers */
+        favorite_stickers_limit?: td_int64;
+
+        /** Maximum number of forwarded messages per one request */
+        forwarded_message_count_max?: td_int64;
+
+        /** Identifier of the bot which is shown as the sender of anonymous messages in groups when viewed from an outdated client */
+        group_anonymous_bot_user_id?: td_int64;
+
+        /** Maximum length of a message caption */
+        message_caption_length_max?: td_int64;
+
+        /** Maximum length of a message text */
+        message_text_length_max?: td_int64;
+
+        /** Identifier of the current user */
+        my_id?: td_int64;
+
+        /** Maximum number of pinned cloud chats in the Archive chat list. The same amount of secret chats can be pinned locally */
+        pinned_archived_chat_count_max?: td_int64;
+
+        /** Maximum number of pinned cloud chats in the Main chat list. The same amount of secret chats can be pinned locally */
+        pinned_chat_count_max?: td_int64;
+
+        /** Username of a bot which can be used in inline mode for photos search */
+        photo_search_bot_username?: td_string;
+
+        /** Identifier of the @replies bot */
+        replies_bot_chat_id?: td_int64;
+
+        /** Identifier of the language pack, suggested for the user by the server */
+        suggested_language_pack_id?: td_string;
+
+        /** Maximum number of members in a supergroup */
+        supergroup_size_max?: td_int64;
+
+        /** Current value of t.me URL, i.e. https://t.me/ */
+        t_me_url?: td_string;
+
+        /** Identifier of the Telegram Service Notifications chat */
+        telegram_service_notifications_chat_id?: td_int64;
+
+        /** If true, the test environment is being used instead of the production environment */
+        test_mode?: td_Bool;
+
+        /** An estimation of the current Unix timestamp. The option will not be updated automatically unless the difference between the previous estimation and the locally available monotonic clocks changes significantly */
+        unix_time?: td_int64;
+
+        /** Username of a bot which can be used in inline mode for venues search */
+        venue_search_bot_username?: td_string;
+
+        /** TDLib version. This options is guaranteed to come before all other updates since TDLib 1.4.0 */
+        version?: td_string;
+    }
+
+    export type TdOptionKey= 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | 'animated_emoji_sticker_set_name' | 'animation_search_bot_username' | 'authorization_date' | 'basic_group_size_max' | 'call_connect_timeout_ms' | 'call_packet_timeout_ms' | 'can_archive_and_mute_new_chats_from_unknown_users' | 'can_ignore_sensitive_content_restrictions' | 'enabled_proxy_id' | 'expect_blocking' | 'favorite_stickers_limit' | 'forwarded_message_count_max' | 'group_anonymous_bot_user_id' | 'message_caption_length_max' | 'message_text_length_max' | 'my_id' | 'pinned_archived_chat_count_max' | 'pinned_chat_count_max' | 'photo_search_bot_username' | 'replies_bot_chat_id' | 'suggested_language_pack_id' | 'supergroup_size_max' | 't_me_url' | 'telegram_service_notifications_chat_id' | 'test_mode' | 'unix_time' | 'venue_search_bot_username' | 'version' | `x-${string}` | `X-${string}`;
+
+    export type TdOptionKey_writable = 'always_parse_markdown' | 'archive_and_mute_new_chats_from_unknown_users' | 'disable_contact_registered_notifications' | 'disable_persistent_network_statistics' | 'disable_sent_scheduled_message_notifications' | 'disable_time_adjustment_protection' | 'disable_top_chats' | 'ignore_background_updates' | 'ignore_default_disable_notification' | 'ignore_inline_thumbnails' | 'ignore_platform_restrictions' | 'ignore_sensitive_content_restrictions' | 'is_location_visible' | 'language_pack_database_path' | 'language_pack_id' | 'localization_target' | 'message_unload_delay' | 'notification_group_count_max' | 'notification_group_size_max' | 'online' | 'prefer_ipv6' | 'use_pfs' | 'use_quick_ack' | 'use_storage_optimizer' | `x-${string}` | `X-${string}`;
+
+    export type TdOptionType<T extends TdOptionKey | TdOptionKey_writable, U extends T>=
+        U extends "always_parse_markdown" ? td_optionValueBoolean :
+        U extends "archive_and_mute_new_chats_from_unknown_users" ? td_optionValueBoolean :
+        U extends "disable_contact_registered_notifications" ? td_optionValueBoolean :
+        U extends "disable_persistent_network_statistics" ? td_optionValueBoolean :
+        U extends "disable_sent_scheduled_message_notifications" ? td_optionValueBoolean :
+        U extends "disable_time_adjustment_protection" ? td_optionValueBoolean :
+        U extends "disable_top_chats" ? td_optionValueBoolean :
+        U extends "ignore_background_updates" ? td_optionValueBoolean :
+        U extends "ignore_default_disable_notification" ? td_optionValueBoolean :
+        U extends "ignore_inline_thumbnails" ? td_optionValueBoolean :
+        U extends "ignore_platform_restrictions" ? td_optionValueBoolean :
+        U extends "ignore_sensitive_content_restrictions" ? td_optionValueBoolean :
+        U extends "is_location_visible" ? td_optionValueBoolean :
+        U extends "language_pack_database_path" ? td_optionValueString :
+        U extends "language_pack_id" ? td_optionValueString :
+        U extends "localization_target" ? td_optionValueString :
+        U extends "message_unload_delay" ? td_optionValueInteger :
+        U extends "notification_group_count_max" ? td_optionValueInteger :
+        U extends "notification_group_size_max" ? td_optionValueInteger :
+        U extends "online" ? td_optionValueBoolean :
+        U extends "prefer_ipv6" ? td_optionValueBoolean :
+        U extends "use_pfs" ? td_optionValueBoolean :
+        U extends "use_quick_ack" ? td_optionValueBoolean :
+        U extends "use_storage_optimizer" ? td_optionValueBoolean :
+        U extends "animated_emoji_sticker_set_name" ? td_optionValueString :
+        U extends "animation_search_bot_username" ? td_optionValueString :
+        U extends "authorization_date" ? td_optionValueInteger :
+        U extends "basic_group_size_max" ? td_optionValueInteger :
+        U extends "call_connect_timeout_ms" ? td_optionValueInteger :
+        U extends "call_packet_timeout_ms" ? td_optionValueInteger :
+        U extends "can_archive_and_mute_new_chats_from_unknown_users" ? td_optionValueBoolean :
+        U extends "can_ignore_sensitive_content_restrictions" ? td_optionValueBoolean :
+        U extends "enabled_proxy_id" ? td_optionValueInteger :
+        U extends "expect_blocking" ? td_optionValueBoolean :
+        U extends "favorite_stickers_limit" ? td_optionValueInteger :
+        U extends "forwarded_message_count_max" ? td_optionValueInteger :
+        U extends "group_anonymous_bot_user_id" ? td_optionValueInteger :
+        U extends "message_caption_length_max" ? td_optionValueInteger :
+        U extends "message_text_length_max" ? td_optionValueInteger :
+        U extends "my_id" ? td_optionValueInteger :
+        U extends "pinned_archived_chat_count_max" ? td_optionValueInteger :
+        U extends "pinned_chat_count_max" ? td_optionValueInteger :
+        U extends "photo_search_bot_username" ? td_optionValueString :
+        U extends "replies_bot_chat_id" ? td_optionValueInteger :
+        U extends "suggested_language_pack_id" ? td_optionValueString :
+        U extends "supergroup_size_max" ? td_optionValueInteger :
+        U extends "t_me_url" ? td_optionValueString :
+        U extends "telegram_service_notifications_chat_id" ? td_optionValueInteger :
+        U extends "test_mode" ? td_optionValueBoolean :
+        U extends "unix_time" ? td_optionValueInteger :
+        U extends "venue_search_bot_username" ? td_optionValueString :
+        U extends "version" ? td_optionValueString :
+        T;
+    
 }
 export default TdApi;

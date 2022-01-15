@@ -12,6 +12,7 @@ To generate a TypeScript type definitions file:
 
 1. Install Node.js if you don't have it
 2. Copy `convert.js` and `td_api.tl` to the same folder
-3. Run `node convert.js`
+3. _[Optional]_ Copy the contents of the table in <https://core.telegram.org/tdlib/options> and save it in `options.txt` (rows separated by line breaks, cells separated by tabs). Doing this will add TDLib options types to generated types.
+4. Run `node convert.js`
 
    Note: By default, the generator includes differences between Tdweb API and JSON API. To disable this behavior, pass the `--disable-tdweb-additional-types` flag when running the generator.

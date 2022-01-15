@@ -1,5 +1,6 @@
 const fs = require('fs')
 
+const useOptions= fs.existsSync('./options.txt');
 fs.readFile('./td_api.tl', 'utf8' , (err, data) => {
   if (err) {
     console.error(err)
@@ -42,10 +43,10 @@ function parseTlType(line) {
             const [name, type] = property.split(':');
             if(process.argv[2] !== '--disable-tdweb-additional-types' ){
                 if(subclass==='filePart' && name==='data'){
-                    return {name, type: 'blob'};
+                    return {name, type: 'td_blob'};
                 }
             }
-            return { name, type };
+            return { name, type: 'td_'+type.replace(/</g, '<td_') };
         }),
         abstractClass: right.trim().slice(0, -1),
     }
@@ -202,7 +203,8 @@ namespace TdApi {
         `
     }
 
-    transpiled += `never;
+    transpiled += `never;${
+    transpileOptions()}
 }
 export default TdApi;
 `;
@@ -217,18 +219,13 @@ function transpileType(type, isFunction) {
         '@type': '${type.type.subclass}';`;
 
     for (const property of type.type.properties) {
-        if(property.type.includes('<')) {
-            const [name, ...types] = property.type.split('<');
-            property.type= `${name}<${types.map(type => 'td_'+type).join('<')}`;
-        }
-
         const doc= type.documentation[property.name];
         const optional= isFunction || (doc.includes('may be null') ? '?' : '');
 
         transpiled += `
         ${ doc? '/** '+doc.trim()+' */' : ''}`;
         transpiled += `
-        ${property.name}${optional? '?' : ''}: td_${property.type};`;
+        ${property.name}${optional? '?' : ''}: ${property.type};`;
     }
 
     transpiled += `
@@ -236,4 +233,55 @@ function transpileType(type, isFunction) {
     
     `
     return transpiled;
+}
+
+function transpileOptions() {
+    if(!useOptions) {
+        console.warn('options.txt not found. Skipping options.');
+        return '';
+    }
+    const options = fs.readFileSync('./options.txt', 'utf8').split('\n');
+
+    return `
+
+    /** Dictionary which contains TDLib options, suitable for a global options storage */
+    export interface TdOptions { 
+        ${ options.map(line => {
+            let [name, type, writable, description]= line.split('\t');
+            return (
+            `/** ${description.trim()} */
+        ${name}?: td_optionValue${type};`
+            );
+        }).join('\n\n        ')}
+
+        [key: string]: td_OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
+    }
+    
+    /** Similar to \`TdOptions\` but contains the values themselves instead of \`OptionValue\`. */
+    export interface TdOptions_pure {
+        ${ options.map(line => {
+            let [name, type, writable, description]= line.split('\t');
+            const pureType= {
+                "Integer": "int64",
+                "Boolean": "Bool",
+                "String": "string",
+            }[type];
+            return (
+            `/** ${description.trim()} */
+        ${name}?: td_${pureType};`
+            );
+        }).join('\n\n        ')}
+    }
+
+    export type TdOptionKey= ${options.map(line=>"'"+line.split('\t')[0]+"'").join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
+
+    export type TdOptionKey_writable = ${options.filter(line=>line.split('\t')[2]==='Yes').map(line=>"'"+line.split('\t')[0]+"'").join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
+
+    export type TdOptionType<T extends TdOptionKey | TdOptionKey_writable, U extends T>=
+        ${options.map((line)=> {
+            let [name, type]= line.split('\t');
+            return `U extends "${name}" ? td_optionValue${type} :`
+        }).join('\n        ')}
+        T;
+    `;
 }
