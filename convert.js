@@ -271,6 +271,8 @@ function transpileOptions() {
         ${name}?: td_${pureType};`
             );
         }).join('\n\n        ')}
+        
+        [key: string]: td_string | td_Bool | td_int64; // The app can store custom options with name starting with 'x-' or 'X-'.
     }
 
     export type TdOptionKey= ${options.map(line=>"'"+line.split('\t')[0]+"'").join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
