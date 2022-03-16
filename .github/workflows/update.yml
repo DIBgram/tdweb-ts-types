@@ -1,0 +1,60 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Update API schemes
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      version: 
+        required: true
+      ref:
+        default: master
+        description: TDLib repo ref (commit/tag/branch)
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Checkout TDLib
+        uses: actions/checkout@v3
+        with:
+          repository: tdlib/td
+          ref: ${{ github.event.inputs.ref }}
+          path: td
+          
+      - name: Copy td_api.tl
+        run: |
+          cp td/td/generate/scheme/td_api.tl ./td_api.tl
+          
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+          
+      - name: Generate scheme
+        run: |
+          node convert.js
+          
+      - name: Delete TDLib folder
+        run: |
+          rm -rf ./td
+      
+      
+      - name: Commit changes
+        uses: zwaldowski/git-commit-action@v1
+        with:
+          # Commit message
+          commit_message: Update to ${{ github.event.inputs.version }}
+          
+      - name: Tag & push
+        run: |
+          cd repo
+          # git tag v${{ github.event.inputs.version }}
+          git push
