@@ -55,6 +55,5 @@ jobs:
           
       - name: Tag & push
         run: |
-          cd repo
-          # git tag v${{ github.event.inputs.version }}
+          git tag v${{ github.event.inputs.version }}
           git push
