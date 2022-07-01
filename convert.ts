@@ -64,10 +64,10 @@ function parseTlType(line: string) {
             const [name, type] = property.split(':');
             if(process.argv[2] !== '--disable-tdweb-additional-types' ){
                 if(subclass==='filePart' && name==='data'){
-                    return {name, type: 'td_blob'};
+                    return {name, type: 'Blob'};
                 }
             }
-            return { name, type: 'td_'+type.replace(/</g, '<td_') };
+            return { name, type };
         }),
         abstractClass: right.trim().slice(0, -1),
     }
@@ -145,23 +145,21 @@ function parseTlFile(text: string) {
 function transpileTypes({types, functions}: ReturnType<typeof parseTlFile>) {
     var transpiled= `
 namespace TdApi {
-    type td_double = number;
-    type td_string = string;
-    type td_int32 = number;
-    type td_int53 = number;
-    type td_int64 = string;
-    type td_bytes = string;
+    type double = number;
+    type int32 = number;
+    type int53 = number;
+    type int64 = string;
+    type bytes = string;
 
-    type td_Bool = boolean;
+    type Bool = boolean;
 
-    type td_vector<t> = t[];
+    type vector<t> = t[];
 
     `;
 
     if(process.argv[2] !== '--disable-tdweb-additional-types' ){
         transpiled+= `
-    type td_blob= Blob;
-    type td_jsLogLevel= 'error' | 'warning' | 'info' | 'log' | 'debug';
+    type jsLogLevel= 'error' | 'warning' | 'info' | 'log' | 'debug';
 
     `
     }
@@ -169,10 +167,10 @@ namespace TdApi {
     const abstractClasses: Record<string, string[]> = {};
 
     for(const type of types) {
-        if(abstractClasses['td_'+type.type.abstractClass]) {
-            abstractClasses['td_'+type.type.abstractClass].push('td_'+type.type.subclass);
+        if(abstractClasses[type.type.abstractClass]) {
+            abstractClasses[type.type.abstractClass].push(type.type.subclass);
         } else {
-            abstractClasses['td_'+type.type.abstractClass] = ['td_'+type.type.subclass];
+            abstractClasses[type.type.abstractClass] = [type.type.subclass];
         }
         transpiled+= transpileType(type)
     };
@@ -192,7 +190,7 @@ namespace TdApi {
     const functionReturnTypes: Record<string, string> = {};
     for(const function_ of functions) {
         transpiled+= transpileType(function_, true);
-        functionReturnTypes['td_' +function_.type.subclass] = 'td_' +function_.type.abstractClass;
+        functionReturnTypes[function_.type.subclass] = function_.type.abstractClass;
     }
 
     transpiled+= `export type TdFunction = ${Object.keys(functionReturnTypes).join(' | ')};
@@ -211,7 +209,7 @@ namespace TdApi {
     export type TdUpdateType<t> = 
     `;
 
-    for(const updateType of abstractClasses['td_Update']) {
+    for(const updateType of abstractClasses['Update']) {
         transpiled+= `t extends ${updateType} ? "${updateType.slice(3)}" :
         `
     }
@@ -228,7 +226,7 @@ export default TdApi;
 function transpileType(type: TLDeclaration, isFunction?: boolean) {
     let transpiled = `
     ${type.documentation.description ? '/** '+type.documentation.description.trim()+' */' : ''}
-    export interface td_${type.type.subclass} {
+    export interface ${type.type.subclass} {
         '@type': '${type.type.subclass}';`;
 
     for (const property of type.type.properties) {
@@ -274,11 +272,11 @@ function transpileOptions() {
         ${ Object.entries(options).map(([name, {description, type}]) => {
             return (
             `/** ${description.trim()} */
-        ${name}?: td_optionValue${type};`
+        ${name}?: optionValue${type};`
             );
         }).join('\n\n        ')}
 
-        [key: string]: td_OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
+        [key: string]: OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
     }
     
     /** Similar to \`TdOptions\` but contains the values themselves instead of \`OptionValue\`. */
@@ -291,11 +289,11 @@ function transpileOptions() {
             } as const)[type];
             return (
             `/** ${description.trim()} */
-        ${name}?: td_${pureType};`
+        ${name}?: ${pureType};`
             );
         }).join('\n\n        ')}
         
-        [key: string]: td_string | td_Bool | td_int64; // The app can store custom options with name starting with 'x-' or 'X-'.
+        [key: string]: string | Bool | int64; // The app can store custom options with name starting with 'x-' or 'X-'.
     }
 
     export type TdOptionKey= ${Object.keys(options).map(name=>`'${name}'`).join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
@@ -304,7 +302,7 @@ function transpileOptions() {
 
     export type TdOptionType<T extends TdOptionKey | TdOptionKey_writable, U extends T>=
         ${Object.entries(options).map(([name, {type}])=> {
-            return `U extends "${name}" ? td_optionValue${type} :`
+            return `U extends "${name}" ? optionValue${type} :`
         }).join('\n        ')}
         T;
     `;
