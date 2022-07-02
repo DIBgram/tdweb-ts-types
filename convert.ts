@@ -204,17 +204,7 @@ namespace TdApi {
         `
     }
 
-    transpiled+= `never
-    
-    export type TdUpdateType<t> = 
-    `;
-
-    for(const updateType of abstractClasses['Update']) {
-        transpiled+= `t extends ${updateType} ? "${updateType.slice(3)}" :
-        `
-    }
-
-    transpiled += `never;${
+    transpiled+= `never${
     transpileOptions()}
 }
 export default TdApi;
