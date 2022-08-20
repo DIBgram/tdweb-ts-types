@@ -1,4 +1,24 @@
-const fs = require('fs')
+import fs = require('fs');
+
+type TLType = {
+    subclass: string;
+    properties: {
+        name: string;
+        type: string;
+    }[];
+    abstractClass: string;
+};
+
+type TLDeclaration = {
+    documentation: Record<string, string>;
+    type: TLType;
+}
+
+type Option = {
+    type: string;
+    writable: boolean;
+    description: string;
+}
 
 const useOptions= fs.existsSync('./options.txt');
 fs.readFile('./td_api.tl', 'utf8' , (err, data) => {
@@ -6,11 +26,12 @@ fs.readFile('./td_api.tl', 'utf8' , (err, data) => {
     console.error(err)
     return
   }
-  fs.writeFile('./td_api.d.ts', transpileTL(data), (err) => {if(err)throw err;});
+  const types = parseTlFile(data);
+  fs.writeFile('./td_api.d.ts', transpileTypes(types), (err) => {if(err)throw err;});
+  fs.writeFile('./td_api.json', JSON.stringify({...types, options: parseOptions()}), (err) => {if(err)throw err;});
 })
 
-/** @param {string} line */
-function parseTlType(line) {
+function parseTlType(line: string) {
     const [left, right] = line.split('=');
     const [subclass, ...properties] = left.trim().split(' ');
     if([
@@ -43,22 +64,22 @@ function parseTlType(line) {
             const [name, type] = property.split(':');
             if(process.argv[2] !== '--disable-tdweb-additional-types' ){
                 if(subclass==='filePart' && name==='data'){
-                    return {name, type: 'td_blob'};
+                    return {name, type: 'Blob'};
                 }
             }
-            return { name, type: 'td_'+type.replace(/</g, '<td_') };
+            return { name, type };
         }),
         abstractClass: right.trim().slice(0, -1),
     }
 }
 
-function getLines(text) {
+function getLines(text: string) {
     return text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 }
 
 // Separates blocks of TL types.
 // Each TL block consists of zero or more comment lines (starting with double-slash) and one TL definition (not starting with double-slash).
-function parseTlBlocks(lines) {
+function parseTlBlocks(lines: string[]) {
     const blocks = [];
     let block = [];
     for (const line of lines) {
@@ -76,12 +97,11 @@ function parseTlBlocks(lines) {
 
 /**Parses a TL type documentation
  * Each TL documentation has zero or more parts, each starting with an at-sign, immediately followed by a name. Everything after the name until the next at-sign is the documentation.
- * @param {string} documentation
  */
-function parseDocumentation(documentation) {
+function parseDocumentation(documentation: string) {
     if(!documentation.includes('@')) 
         return {};
-    var obj= {};
+    var obj: Record<string, string>= {};
     const parts = documentation.split('@');
     parts.slice(1).forEach((part) => {
         const [name, ...description] = part.split(' ');
@@ -90,15 +110,10 @@ function parseDocumentation(documentation) {
     return obj;
 }
 
-/**
- * 
- * @param {string} text 
- * @returns 
- */
-function parseTlFile(text) {
+function parseTlFile(text: string) {
     var [_types, _functions] = text.split('---functions---');
     var types = parseTlBlocks(getLines(_types));
-    var functions = _functions && parseTlBlocks(getLines(_functions));
+    var functions = _functions ? parseTlBlocks(getLines(_functions)) : [];
 
     if(process.argv[2] !== '--disable-tdweb-additional-types' ){
         types= [
@@ -127,39 +142,35 @@ function parseTlFile(text) {
     return {types, functions};
 }
 
-function transpileTL(tl_source) {
-    const tl= parseTlFile(tl_source);
-    const { types, functions } = tl;
+function transpileTypes({types, functions}: ReturnType<typeof parseTlFile>) {
     var transpiled= `
 namespace TdApi {
-    type td_double = number;
-    type td_string = string;
-    type td_int32 = number;
-    type td_int53 = number;
-    type td_int64 = string;
-    type td_bytes = string;
+    type double = number;
+    type int32 = number;
+    type int53 = number;
+    type int64 = string;
+    type bytes = string;
 
-    type td_Bool = boolean;
+    type Bool = boolean;
 
-    type td_vector<t> = t[];
+    type vector<t> = t[];
 
     `;
 
     if(process.argv[2] !== '--disable-tdweb-additional-types' ){
         transpiled+= `
-    type td_blob= Blob;
-    type td_jsLogLevel= 'error' | 'warning' | 'info' | 'log' | 'debug';
+    type jsLogLevel= 'error' | 'warning' | 'info' | 'log' | 'debug';
 
     `
     }
 
-    const abstractClasses = {};
+    const abstractClasses: Record<string, string[]> = {};
 
     for(const type of types) {
-        if(abstractClasses['td_'+type.type.abstractClass]) {
-            abstractClasses['td_'+type.type.abstractClass].push('td_'+type.type.subclass);
+        if(abstractClasses[type.type.abstractClass]) {
+            abstractClasses[type.type.abstractClass].push(type.type.subclass);
         } else {
-            abstractClasses['td_'+type.type.abstractClass] = ['td_'+type.type.subclass];
+            abstractClasses[type.type.abstractClass] = [type.type.subclass];
         }
         transpiled+= transpileType(type)
     };
@@ -176,10 +187,10 @@ namespace TdApi {
     
     `;
 
-    const functionReturnTypes = {};
+    const functionReturnTypes: Record<string, string> = {};
     for(const function_ of functions) {
         transpiled+= transpileType(function_, true);
-        functionReturnTypes['td_' +function_.type.subclass] = 'td_' +function_.type.abstractClass;
+        functionReturnTypes[function_.type.subclass] = function_.type.abstractClass;
     }
 
     transpiled+= `export type TdFunction = ${Object.keys(functionReturnTypes).join(' | ')};
@@ -193,17 +204,7 @@ namespace TdApi {
         `
     }
 
-    transpiled+= `never
-    
-    export type TdUpdateType<t> = 
-    `;
-
-    for(const updateType of abstractClasses['td_Update']) {
-        transpiled+= `t extends ${updateType} ? "${updateType.slice(3)}" :
-        `
-    }
-
-    transpiled += `never;${
+    transpiled+= `never${
     transpileOptions()}
 }
 export default TdApi;
@@ -212,10 +213,10 @@ export default TdApi;
     return transpiled;
 }
 
-function transpileType(type, isFunction) {
+function transpileType(type: TLDeclaration, isFunction?: boolean) {
     let transpiled = `
     ${type.documentation.description ? '/** '+type.documentation.description.trim()+' */' : ''}
-    export interface td_${type.type.subclass} {
+    export interface ${type.type.subclass} {
         '@type': '${type.type.subclass}';`;
 
     for (const property of type.type.properties) {
@@ -235,54 +236,63 @@ function transpileType(type, isFunction) {
     return transpiled;
 }
 
+function parseOptions() {
+    if(!useOptions) return {};
+    const options: Record<string, Option> = {};
+    const lines = fs.readFileSync('./options.txt', 'utf8').split('\n');
+    for (const line of lines) {
+        let [name, type, writable, description]= line.split('\t');
+        options[name] = {type, writable: writable==='Yes', description};
+    }
+    return options;
+}
+
 function transpileOptions() {
     if(!useOptions) {
         console.warn('options.txt not found. Skipping options.');
         return '';
     }
-    const options = fs.readFileSync('./options.txt', 'utf8').split('\n');
+
+    const options = parseOptions();
 
     return `
 
     /** Dictionary which contains TDLib options, suitable for a global options storage */
     export interface TdOptions { 
-        ${ options.map(line => {
-            let [name, type, writable, description]= line.split('\t');
+        ${ Object.entries(options).map(([name, {description, type}]) => {
             return (
             `/** ${description.trim()} */
-        ${name}?: td_optionValue${type};`
+        ${name}?: optionValue${type};`
             );
         }).join('\n\n        ')}
 
-        [key: string]: td_OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
+        [key: string]: OptionValue; // The app can store custom options with name starting with 'x-' or 'X-'.
     }
     
     /** Similar to \`TdOptions\` but contains the values themselves instead of \`OptionValue\`. */
     export interface TdOptions_pure {
-        ${ options.map(line => {
-            let [name, type, writable, description]= line.split('\t');
-            const pureType= {
+        ${ Object.entries(options).map(([name, {description, type}]) => {
+            const pureType: "string" | "int64" | "Bool" | undefined = ({
                 "Integer": "int64",
                 "Boolean": "Bool",
                 "String": "string",
-            }[type];
+            } as const)[type];
             return (
             `/** ${description.trim()} */
-        ${name}?: td_${pureType};`
+        ${name}?: ${pureType};`
             );
         }).join('\n\n        ')}
         
-        [key: string]: td_string | td_Bool | td_int64; // The app can store custom options with name starting with 'x-' or 'X-'.
+        [key: string]: string | Bool | int64; // The app can store custom options with name starting with 'x-' or 'X-'.
     }
 
-    export type TdOptionKey= ${options.map(line=>"'"+line.split('\t')[0]+"'").join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
+    export type TdOptionKey= ${Object.keys(options).map(name=>`'${name}'`).join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
 
-    export type TdOptionKey_writable = ${options.filter(line=>line.split('\t')[2]==='Yes').map(line=>"'"+line.split('\t')[0]+"'").join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
+    export type TdOptionKey_writable = ${Object.entries(options).filter(([, {writable}])=>writable).map(([name])=>`'${name}'`).join(' | ')} | \`x-\${string}\` | \`X-\${string}\`;
 
     export type TdOptionType<T extends TdOptionKey | TdOptionKey_writable, U extends T>=
-        ${options.map((line)=> {
-            let [name, type]= line.split('\t');
-            return `U extends "${name}" ? td_optionValue${type} :`
+        ${Object.entries(options).map(([name, {type}])=> {
+            return `U extends "${name}" ? optionValue${type} :`
         }).join('\n        ')}
         T;
     `;

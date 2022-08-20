@@ -1,0 +1,24 @@
+{
+  "name": "tdweb-ts-types",
+  "version": "1.0.0",
+  "description": "Type definitions for TDLib API (tdweb)",
+  "main": "convert.ts",
+  "scripts": {
+    "start": "ts-node convert.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DIBgram/tdweb-ts-types.git"
+  },
+  "author": "Mammad900",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/DIBgram/tdweb-ts-types/issues"
+  },
+  "homepage": "https://github.com/DIBgram/tdweb-ts-types#readme",
+  "dependencies": {
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.4"
+  }
+}
