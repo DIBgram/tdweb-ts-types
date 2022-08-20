@@ -218,7 +218,7 @@ namespace TdApi {
     }
     
     
-    /** The user has been authorized, but needs to enter a password to start using the application */
+    /** The user has been authorized, but needs to enter a 2-step verification password to start using the application */
     export interface authorizationStateWaitPassword {
         '@type': 'authorizationStateWaitPassword';
         /** Hint for the password; may be empty */
@@ -267,7 +267,7 @@ namespace TdApi {
         has_passport_data: Bool;
         /** Information about the recovery email address to which the confirmation email was sent; may be null */
         recovery_email_address_code_info?: emailAddressAuthenticationCodeInfo;
-        /** If not 0, point in time (Unix timestamp) after which the password can be reset immediately using resetPassword */
+        /** If not 0, point in time (Unix timestamp) after which the 2-step verification password can be reset immediately using resetPassword */
         pending_reset_date: int32;
     }
     
@@ -503,28 +503,38 @@ namespace TdApi {
     
     
     /** The sticker is an image in WEBP format */
-    export interface stickerTypeStatic {
-        '@type': 'stickerTypeStatic';
+    export interface stickerFormatWebp {
+        '@type': 'stickerFormatWebp';
     }
     
     
     /** The sticker is an animation in TGS format */
-    export interface stickerTypeAnimated {
-        '@type': 'stickerTypeAnimated';
+    export interface stickerFormatTgs {
+        '@type': 'stickerFormatTgs';
     }
     
     
     /** The sticker is a video in WEBM format */
-    export interface stickerTypeVideo {
-        '@type': 'stickerTypeVideo';
+    export interface stickerFormatWebm {
+        '@type': 'stickerFormatWebm';
+    }
+    
+    
+    /** The sticker is a regular sticker */
+    export interface stickerTypeRegular {
+        '@type': 'stickerTypeRegular';
     }
     
     
     /** The sticker is a mask in WEBP format to be placed on photos or videos */
     export interface stickerTypeMask {
         '@type': 'stickerTypeMask';
-        /** Position where the mask is placed; may be null */
-        mask_position?: maskPosition;
+    }
+    
+    
+    /** The sticker is a custom emoji to be used inside message text and caption */
+    export interface stickerTypeCustomEmoji {
+        '@type': 'stickerTypeCustomEmoji';
     }
     
     
@@ -609,8 +619,10 @@ namespace TdApi {
         mime_type: string;
         /** The minithumbnail of the album cover; may be null */
         album_cover_minithumbnail?: minithumbnail;
-        /** The thumbnail of the album cover in JPEG format; as defined by the sender. The full size thumbnail is supposed to be extracted from the downloaded file; may be null */
+        /** The thumbnail of the album cover in JPEG format; as defined by the sender. The full size thumbnail is supposed to be extracted from the downloaded audio file; may be null */
         album_cover_thumbnail?: thumbnail;
+        /** Album cover variants to use if the downloaded audio file contains no album cover. Provided thumbnail dimensions are approximate */
+        external_album_covers: vector<thumbnail>;
         /** File containing the audio */
         audio: file;
     }
@@ -655,13 +667,21 @@ namespace TdApi {
         height: int32;
         /** Emoji corresponding to the sticker */
         emoji: string;
+        /** Sticker format */
+        format: StickerFormat;
         /** Sticker type */
         type: StickerType;
+        /** Position where the mask is placed; may be null even the sticker is a mask */
+        mask_position?: maskPosition;
+        /** Identifier of the emoji if the sticker is a custom emoji */
+        custom_emoji_id: int64;
         /** Sticker's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner */
         outline: vector<closedVectorPath>;
         /** Sticker thumbnail in WEBP or JPEG format; may be null */
         thumbnail?: thumbnail;
-        /** Premium animation of the sticker; may be null. If present, only Premium users can send the sticker */
+        /** True, if only Premium users can use the sticker */
+        is_premium: Bool;
+        /** Premium animation of the sticker; may be null */
         premium_animation?: file;
         /** File containing the sticker */
         sticker: file;
@@ -719,23 +739,21 @@ namespace TdApi {
         waveform: bytes;
         /** MIME type of the file; as defined by the sender */
         mime_type: string;
-        /** True, if speech recognition is completed; Premium users only */
-        is_recognized: Bool;
-        /** Recognized text of the voice note; Premium users only. Call recognizeSpeech to get recognized text of the voice note */
-        recognized_text: string;
+        /** Result of speech recognition in the voice note; may be null */
+        speech_recognition_result?: SpeechRecognitionResult;
         /** File containing the voice note */
         voice: file;
     }
     
     
-    /** Describes an animated representation of an emoji */
+    /** Describes an animated or custom representation of an emoji */
     export interface animatedEmoji {
         '@type': 'animatedEmoji';
-        /** Animated sticker for the emoji */
-        sticker: sticker;
+        /** Sticker for the emoji; may be null if yet unknown for a custom emoji. If the sticker is a custom emoji, it can have arbitrary format different from stickerFormatTgs */
+        sticker?: sticker;
         /** Emoji modifier fitzpatrick type; 0-6; 0 if none */
         fitzpatrick_type: int32;
-        /** File containing the sound to be played when the animated emoji is clicked; may be null. The sound is encoded with the Opus codec, and stored inside an OGG container */
+        /** File containing the sound to be played when the sticker is clicked; may be null. The sound is encoded with the Opus codec, and stored inside an OGG container */
         sound?: file;
     }
     
@@ -1054,6 +1072,24 @@ namespace TdApi {
     }
     
     
+    /** Describes an option for gifting Telegram Premium to a user */
+    export interface premiumGiftOption {
+        '@type': 'premiumGiftOption';
+        /** ISO 4217 currency code for Telegram Premium subscription payment */
+        currency: string;
+        /** The amount to pay, in the smallest units of the currency */
+        amount: int53;
+        /** The discount associated with this gift option, as a percentage */
+        discount_percentage: int32;
+        /** Number of month the Telegram Premium subscription will be active */
+        month_count: int32;
+        /** Identifier of the store product associated with the option */
+        store_product_id: string;
+        /** An internal link to be opened for gifting Telegram Premium to the user if store payment isn't possible; may be null if direct payment isn't available */
+        payment_link?: InternalLinkType;
+    }
+    
+    
     /** Represents a user */
     export interface user {
         '@type': 'user';
@@ -1135,10 +1171,14 @@ namespace TdApi {
         has_private_calls: Bool;
         /** True, if the user can't be linked in forwarded messages due to their privacy settings */
         has_private_forwards: Bool;
+        /** True, if voice and video notes can't be sent or forwarded to the user */
+        has_restricted_voice_and_video_note_messages: Bool;
         /** True, if the current user needs to explicitly allow to share their phone number with the user when the method addContact is used */
         need_phone_number_privacy_exception: Bool;
         /** A short user bio; may be null for bots */
         bio?: formattedText;
+        /** The list of available options for gifting Telegram Premium to the user */
+        premium_gift_options: vector<premiumGiftOption>;
         /** Number of group chats where both the other user and the current user are a member; 0 for the current user */
         group_in_common_count: int32;
         /** For bots, information about the bot; may be null */
@@ -1653,7 +1693,7 @@ namespace TdApi {
         is_outbound: Bool;
         /** Hash of the currently used key for comparison with the hash of the chat partner's key. This is a string of 36 little-endian bytes, which must be split into groups of 2 bits, each denoting a pixel of one of 4 colors FFFFFF, D5E6F3, 2D5775, and 2F99C9. -The pixels must be used to make a 12x12 square image filled from left to right, top to bottom. Alternatively, the first 32 bytes of the hash can be converted to the hexadecimal format and printed as 32 2-digit hex numbers */
         key_hash: bytes;
-        /** Secret chat layer; determines features supported by the chat partner's application. Nested text entities and underline and strikethrough entities are supported if the layer >= 101, files bigger than 2000MB are supported if the layer >= 143 */
+        /** Secret chat layer; determines features supported by the chat partner's application. Nested text entities and underline and strikethrough entities are supported if the layer >= 101, files bigger than 2000MB are supported if the layer >= 143, spoiler and custom emoji text entities are supported if the layer >= 144 */
         layer: int32;
     }
     
@@ -1855,7 +1895,7 @@ namespace TdApi {
         can_get_added_reactions: Bool;
         /** True, if the message statistics are available through getMessageStatistics */
         can_get_statistics: Bool;
-        /** True, if information about the message thread is available through getMessageThread */
+        /** True, if information about the message thread is available through getMessageThread and getMessageThreadHistory */
         can_get_message_thread: Bool;
         /** True, if chat members already viewed the message can be received through getMessageViewers */
         can_get_viewers: Bool;
@@ -2510,7 +2550,7 @@ namespace TdApi {
     }
     
     
-    /** A button that asks for password of the current user and then sends a callback query to a bot */
+    /** A button that asks for the 2-step verification password of the current user and then sends a callback query to a bot */
     export interface inlineKeyboardButtonTypeCallbackWithPassword {
         '@type': 'inlineKeyboardButtonTypeCallbackWithPassword';
         /** Data to be sent to the bot via a callback query */
@@ -3436,7 +3476,7 @@ namespace TdApi {
     }
     
     
-    /** Contains information about saved card credentials */
+    /** Contains information about saved payment credentials */
     export interface savedCredentials {
         '@type': 'savedCredentials';
         /** Unique identifier of the saved credentials */
@@ -3510,6 +3550,16 @@ namespace TdApi {
     }
     
     
+    /** Describes an additional payment option */
+    export interface paymentOption {
+        '@type': 'paymentOption';
+        /** Title for the payment option */
+        title: string;
+        /** Payment form URL to be opened in a web view */
+        url: string;
+    }
+    
+    
     /** Contains information about an invoice payment form */
     export interface paymentForm {
         '@type': 'paymentForm';
@@ -3523,13 +3573,15 @@ namespace TdApi {
         payment_provider_user_id: int53;
         /** Information about the payment provider */
         payment_provider: PaymentProvider;
+        /** The list of additional payment options */
+        additional_payment_options: vector<paymentOption>;
         /** Saved server-side order information; may be null */
         saved_order_info?: orderInfo;
-        /** Information about saved card credentials; may be null */
-        saved_credentials?: savedCredentials;
+        /** The list of saved payment credentials */
+        saved_credentials: vector<savedCredentials>;
         /** True, if the user can choose to save credentials */
         can_save_credentials: Bool;
-        /** True, if the user will be able to save credentials protected by a password they set up */
+        /** True, if the user will be able to save credentials, if sets up a 2-step verification password */
         need_password: Bool;
         /** Product title */
         product_title: string;
@@ -4680,6 +4732,20 @@ namespace TdApi {
     }
     
     
+    /** Telegram Premium was gifted to the user */
+    export interface messageGiftedPremium {
+        '@type': 'messageGiftedPremium';
+        /** Currency for the paid amount */
+        currency: string;
+        /** The paid amount, in the smallest units of the currency */
+        amount: int53;
+        /** Number of month the Telegram Premium subscription will be active */
+        month_count: int32;
+        /** A sticker to be shown in the message; may be null if unknown */
+        sticker?: sticker;
+    }
+    
+    
     /** A contact has registered with Telegram */
     export interface messageContactRegistered {
         '@type': 'messageContactRegistered';
@@ -4820,7 +4886,7 @@ namespace TdApi {
     }
     
     
-    /** A spoiler text. Not supported in secret chats */
+    /** A spoiler text */
     export interface textEntityTypeSpoiler {
         '@type': 'textEntityTypeSpoiler';
     }
@@ -4859,6 +4925,14 @@ namespace TdApi {
         '@type': 'textEntityTypeMentionName';
         /** Identifier of the mentioned user */
         user_id: int53;
+    }
+    
+    
+    /** A custom emoji. The text behind a custom emoji must be an emoji. Only premium users can use premium custom emoji */
+    export interface textEntityTypeCustomEmoji {
+        '@type': 'textEntityTypeCustomEmoji';
+        /** Unique identifier of the custom emoji */
+        custom_emoji_id: int64;
     }
     
     
@@ -4925,7 +4999,7 @@ namespace TdApi {
     /** A text message */
     export interface inputMessageText {
         '@type': 'inputMessageText';
-        /** Formatted text to be sent; 1-GetOption("message_text_length_max") characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually */
+        /** Formatted text to be sent; 1-GetOption("message_text_length_max") characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually */
         text: formattedText;
         /** True, if rich web page previews for URLs in the message text must be disabled */
         disable_web_page_preview: Bool;
@@ -5465,6 +5539,8 @@ namespace TdApi {
         is_archived: Bool;
         /** True, if the sticker set is official */
         is_official: Bool;
+        /** Format of the stickers in the set */
+        sticker_format: StickerFormat;
         /** Type of the stickers in the set */
         sticker_type: StickerType;
         /** True for already viewed trending sticker sets */
@@ -5495,6 +5571,8 @@ namespace TdApi {
         is_archived: Bool;
         /** True, if the sticker set is official */
         is_official: Bool;
+        /** Format of the stickers in the set */
+        sticker_format: StickerFormat;
         /** Type of the stickers in the set */
         sticker_type: StickerType;
         /** True for already viewed trending sticker sets */
@@ -6058,6 +6136,30 @@ namespace TdApi {
     }
     
     
+    /** The speech recognition is ongoing */
+    export interface speechRecognitionResultPending {
+        '@type': 'speechRecognitionResultPending';
+        /** Partially recognized text */
+        partial_text: string;
+    }
+    
+    
+    /** The speech recognition successfully finished */
+    export interface speechRecognitionResultText {
+        '@type': 'speechRecognitionResultText';
+        /** Recognized text */
+        text: string;
+    }
+    
+    
+    /** The speech recognition failed */
+    export interface speechRecognitionResultError {
+        '@type': 'speechRecognitionResultError';
+        /** Received error */
+        error: error;
+    }
+    
+    
     /** Describes a color to highlight a bot added to attachment menu */
     export interface attachmentMenuBotColor {
         '@type': 'attachmentMenuBotColor';
@@ -6567,7 +6669,7 @@ namespace TdApi {
     /** The payload for a callback button requiring password */
     export interface callbackQueryPayloadDataWithPassword {
         '@type': 'callbackQueryPayloadDataWithPassword';
-        /** The password for the current user */
+        /** The 2-step verification password for the current user */
         password: string;
         /** Data that was attached to the callback button */
         data: bytes;
@@ -7184,6 +7286,12 @@ namespace TdApi {
     }
     
     
+    /** Allowed to use custom emoji stickers in message texts and captions */
+    export interface premiumFeatureCustomEmoji {
+        '@type': 'premiumFeatureCustomEmoji';
+    }
+    
+    
     /** Ability to change position of the main chat list, archive and mute all new chats from non-contacts, and completely disable notifications about the user's contacts joined Telegram */
     export interface premiumFeatureAdvancedChatManagement {
         '@type': 'premiumFeatureAdvancedChatManagement';
@@ -7283,6 +7391,26 @@ namespace TdApi {
         monthly_amount: int53;
         /** The list of available promotion animations for Premium features */
         animations: vector<premiumFeaturePromotionAnimation>;
+    }
+    
+    
+    /** The user subscribed to Telegram Premium */
+    export interface storePaymentPurposePremiumSubscription {
+        '@type': 'storePaymentPurposePremiumSubscription';
+        /** Pass true if this is a restore of a Telegram Premium purchase; only for App Store */
+        is_restore: Bool;
+    }
+    
+    
+    /** The user gifted Telegram Premium to another user */
+    export interface storePaymentPurposeGiftedPremium {
+        '@type': 'storePaymentPurposeGiftedPremium';
+        /** Identifier of the user for which Premium was gifted */
+        user_id: int53;
+        /** ISO 4217 currency code of the payment currency */
+        currency: string;
+        /** Paid amount, in the smallest units of the currency */
+        amount: int53;
     }
     
     
@@ -8252,6 +8380,12 @@ namespace TdApi {
     }
     
     
+    /** A privacy setting for managing whether the user can receive voice and video messages in private chats */
+    export interface userPrivacySettingAllowPrivateVoiceAndVideoNoteMessages {
+        '@type': 'userPrivacySettingAllowPrivateVoiceAndVideoNoteMessages';
+    }
+    
+    
     /** Contains information about the period of inactivity after which the current user's account will automatically be deleted */
     export interface accountTtl {
         '@type': 'accountTtl';
@@ -8369,7 +8503,7 @@ namespace TdApi {
         id: int64;
         /** True, if this session is the current session */
         is_current: Bool;
-        /** True, if a password is needed to complete authorization of the session */
+        /** True, if a 2-step verification password is needed to complete authorization of the session */
         is_password_pending: Bool;
         /** True, if incoming secret chats can be accepted by the session */
         can_accept_secret_chats: Bool;
@@ -8735,6 +8869,12 @@ namespace TdApi {
     /** The link can be used to login the current user on another device, but it must be scanned from QR-code using in-app camera. An alert similar to -"This code can be used to allow someone to log in to your Telegram account. To confirm Telegram login, please go to Settings > Devices > Scan QR and scan the code" needs to be shown */
     export interface internalLinkTypeQrCodeAuthentication {
         '@type': 'internalLinkTypeQrCodeAuthentication';
+    }
+    
+    
+    /** The link forces restore of App Store purchases when opened. For official iOS application only */
+    export interface internalLinkTypeRestorePurchases {
+        '@type': 'internalLinkTypeRestorePurchases';
     }
     
     
@@ -9383,8 +9523,10 @@ namespace TdApi {
         sticker: InputFile;
         /** Emojis corresponding to the sticker */
         emojis: string;
-        /** Sticker type */
-        type: StickerType;
+        /** Sticker format */
+        format: StickerFormat;
+        /** Position where the mask is placed; pass null if not specified */
+        mask_position: maskPosition;
     }
     
     
@@ -10409,8 +10551,8 @@ namespace TdApi {
     /** The list of installed sticker sets was updated */
     export interface updateInstalledStickerSets {
         '@type': 'updateInstalledStickerSets';
-        /** True, if the list of installed mask sticker sets was updated */
-        is_masks: Bool;
+        /** Type of the affected stickers */
+        sticker_type: StickerType;
         /** The new list of installed ordinary sticker sets */
         sticker_set_ids: vector<int64>;
     }
@@ -10419,6 +10561,8 @@ namespace TdApi {
     /** The list of trending sticker sets was updated or some of them were viewed */
     export interface updateTrendingStickerSets {
         '@type': 'updateTrendingStickerSets';
+        /** Type of the affected stickers */
+        sticker_type: StickerType;
         /** The prefix of the list of trending sticker sets with the newest trending sticker sets */
         sticker_sets: trendingStickerSets;
     }
@@ -10798,6 +10942,18 @@ namespace TdApi {
     }
     
     
+    /** Contains custom information about the user */
+    export interface userSupportInfo {
+        '@type': 'userSupportInfo';
+        /** Information message */
+        message: formattedText;
+        /** Information author */
+        author: string;
+        /** Information change date */
+        date: int32;
+    }
+    
+    
     /** A simple object containing a number; for testing only */
     export interface testInt {
         '@type': 'testInt';
@@ -10894,7 +11050,8 @@ namespace TdApi {
     export type Thumbnail = thumbnail;
     export type MaskPoint = maskPointForehead | maskPointEyes | maskPointMouth | maskPointChin;
     export type MaskPosition = maskPosition;
-    export type StickerType = stickerTypeStatic | stickerTypeAnimated | stickerTypeVideo | stickerTypeMask;
+    export type StickerFormat = stickerFormatWebp | stickerFormatTgs | stickerFormatWebm;
+    export type StickerType = stickerTypeRegular | stickerTypeMask | stickerTypeCustomEmoji;
     export type ClosedVectorPath = closedVectorPath;
     export type PollOption = pollOption;
     export type PollType = pollTypeRegular | pollTypeQuiz;
@@ -10925,6 +11082,7 @@ namespace TdApi {
     export type InputChatPhoto = inputChatPhotoPrevious | inputChatPhotoStatic | inputChatPhotoAnimation;
     export type ChatPermissions = chatPermissions;
     export type ChatAdministratorRights = chatAdministratorRights;
+    export type PremiumGiftOption = premiumGiftOption;
     export type User = user;
     export type BotInfo = botInfo;
     export type UserFullInfo = userFullInfo;
@@ -11024,6 +11182,7 @@ namespace TdApi {
     export type SavedCredentials = savedCredentials;
     export type InputCredentials = inputCredentialsSaved | inputCredentialsNew | inputCredentialsApplePay | inputCredentialsGooglePay;
     export type PaymentProvider = paymentProviderSmartGlocal | paymentProviderStripe | paymentProviderOther;
+    export type PaymentOption = paymentOption;
     export type PaymentForm = paymentForm;
     export type ValidatedOrderInfo = validatedOrderInfo;
     export type PaymentResult = paymentResult;
@@ -11050,8 +11209,8 @@ namespace TdApi {
     export type EncryptedPassportElement = encryptedPassportElement;
     export type InputPassportElementErrorSource = inputPassportElementErrorSourceUnspecified | inputPassportElementErrorSourceDataField | inputPassportElementErrorSourceFrontSide | inputPassportElementErrorSourceReverseSide | inputPassportElementErrorSourceSelfie | inputPassportElementErrorSourceTranslationFile | inputPassportElementErrorSourceTranslationFiles | inputPassportElementErrorSourceFile | inputPassportElementErrorSourceFiles;
     export type InputPassportElementError = inputPassportElementError;
-    export type MessageContent = messageText | messageAnimation | messageAudio | messageDocument | messagePhoto | messageExpiredPhoto | messageSticker | messageVideo | messageExpiredVideo | messageVideoNote | messageVoiceNote | messageLocation | messageVenue | messageContact | messageAnimatedEmoji | messageDice | messageGame | messagePoll | messageInvoice | messageCall | messageVideoChatScheduled | messageVideoChatStarted | messageVideoChatEnded | messageInviteVideoChatParticipants | messageBasicGroupChatCreate | messageSupergroupChatCreate | messageChatChangeTitle | messageChatChangePhoto | messageChatDeletePhoto | messageChatAddMembers | messageChatJoinByLink | messageChatJoinByRequest | messageChatDeleteMember | messageChatUpgradeTo | messageChatUpgradeFrom | messagePinMessage | messageScreenshotTaken | messageChatSetTheme | messageChatSetTtl | messageCustomServiceAction | messageGameScore | messagePaymentSuccessful | messagePaymentSuccessfulBot | messageContactRegistered | messageWebsiteConnected | messageWebAppDataSent | messageWebAppDataReceived | messagePassportDataSent | messagePassportDataReceived | messageProximityAlertTriggered | messageUnsupported;
-    export type TextEntityType = textEntityTypeMention | textEntityTypeHashtag | textEntityTypeCashtag | textEntityTypeBotCommand | textEntityTypeUrl | textEntityTypeEmailAddress | textEntityTypePhoneNumber | textEntityTypeBankCardNumber | textEntityTypeBold | textEntityTypeItalic | textEntityTypeUnderline | textEntityTypeStrikethrough | textEntityTypeSpoiler | textEntityTypeCode | textEntityTypePre | textEntityTypePreCode | textEntityTypeTextUrl | textEntityTypeMentionName | textEntityTypeMediaTimestamp;
+    export type MessageContent = messageText | messageAnimation | messageAudio | messageDocument | messagePhoto | messageExpiredPhoto | messageSticker | messageVideo | messageExpiredVideo | messageVideoNote | messageVoiceNote | messageLocation | messageVenue | messageContact | messageAnimatedEmoji | messageDice | messageGame | messagePoll | messageInvoice | messageCall | messageVideoChatScheduled | messageVideoChatStarted | messageVideoChatEnded | messageInviteVideoChatParticipants | messageBasicGroupChatCreate | messageSupergroupChatCreate | messageChatChangeTitle | messageChatChangePhoto | messageChatDeletePhoto | messageChatAddMembers | messageChatJoinByLink | messageChatJoinByRequest | messageChatDeleteMember | messageChatUpgradeTo | messageChatUpgradeFrom | messagePinMessage | messageScreenshotTaken | messageChatSetTheme | messageChatSetTtl | messageCustomServiceAction | messageGameScore | messagePaymentSuccessful | messagePaymentSuccessfulBot | messageGiftedPremium | messageContactRegistered | messageWebsiteConnected | messageWebAppDataSent | messageWebAppDataReceived | messagePassportDataSent | messagePassportDataReceived | messageProximityAlertTriggered | messageUnsupported;
+    export type TextEntityType = textEntityTypeMention | textEntityTypeHashtag | textEntityTypeCashtag | textEntityTypeBotCommand | textEntityTypeUrl | textEntityTypeEmailAddress | textEntityTypePhoneNumber | textEntityTypeBankCardNumber | textEntityTypeBold | textEntityTypeItalic | textEntityTypeUnderline | textEntityTypeStrikethrough | textEntityTypeSpoiler | textEntityTypeCode | textEntityTypePre | textEntityTypePreCode | textEntityTypeTextUrl | textEntityTypeMentionName | textEntityTypeCustomEmoji | textEntityTypeMediaTimestamp;
     export type InputThumbnail = inputThumbnail;
     export type MessageSchedulingState = messageSchedulingStateSendAtDate | messageSchedulingStateSendWhenOnline;
     export type MessageSendOptions = messageSendOptions;
@@ -11093,6 +11252,7 @@ namespace TdApi {
     export type Animations = animations;
     export type DiceStickers = diceStickersRegular | diceStickersSlotMachine;
     export type ImportedContacts = importedContacts;
+    export type SpeechRecognitionResult = speechRecognitionResultPending | speechRecognitionResultText | speechRecognitionResultError;
     export type AttachmentMenuBotColor = attachmentMenuBotColor;
     export type AttachmentMenuBot = attachmentMenuBot;
     export type SentWebAppMessage = sentWebAppMessage;
@@ -11115,12 +11275,13 @@ namespace TdApi {
     export type LanguagePackInfo = languagePackInfo;
     export type LocalizationTargetInfo = localizationTargetInfo;
     export type PremiumLimitType = premiumLimitTypeSupergroupCount | premiumLimitTypePinnedChatCount | premiumLimitTypeCreatedPublicChatCount | premiumLimitTypeSavedAnimationCount | premiumLimitTypeFavoriteStickerCount | premiumLimitTypeChatFilterCount | premiumLimitTypeChatFilterChosenChatCount | premiumLimitTypePinnedArchivedChatCount | premiumLimitTypeCaptionLength | premiumLimitTypeBioLength;
-    export type PremiumFeature = premiumFeatureIncreasedLimits | premiumFeatureIncreasedUploadFileSize | premiumFeatureImprovedDownloadSpeed | premiumFeatureVoiceRecognition | premiumFeatureDisabledAds | premiumFeatureUniqueReactions | premiumFeatureUniqueStickers | premiumFeatureAdvancedChatManagement | premiumFeatureProfileBadge | premiumFeatureAnimatedProfilePhoto | premiumFeatureAppIcons;
+    export type PremiumFeature = premiumFeatureIncreasedLimits | premiumFeatureIncreasedUploadFileSize | premiumFeatureImprovedDownloadSpeed | premiumFeatureVoiceRecognition | premiumFeatureDisabledAds | premiumFeatureUniqueReactions | premiumFeatureUniqueStickers | premiumFeatureCustomEmoji | premiumFeatureAdvancedChatManagement | premiumFeatureProfileBadge | premiumFeatureAnimatedProfilePhoto | premiumFeatureAppIcons;
     export type PremiumLimit = premiumLimit;
     export type PremiumFeatures = premiumFeatures;
     export type PremiumSource = premiumSourceLimitExceeded | premiumSourceFeature | premiumSourceLink | premiumSourceSettings;
     export type PremiumFeaturePromotionAnimation = premiumFeaturePromotionAnimation;
     export type PremiumState = premiumState;
+    export type StorePaymentPurpose = storePaymentPurposePremiumSubscription | storePaymentPurposeGiftedPremium;
     export type DeviceToken = deviceTokenFirebaseCloudMessaging | deviceTokenApplePush | deviceTokenApplePushVoIP | deviceTokenWindowsPush | deviceTokenMicrosoftPush | deviceTokenMicrosoftPushVoIP | deviceTokenWebPush | deviceTokenSimplePush | deviceTokenUbuntuPush | deviceTokenBlackBerryPush | deviceTokenTizenPush;
     export type PushReceiverId = pushReceiverId;
     export type BackgroundFill = backgroundFillSolid | backgroundFillGradient | backgroundFillFreeformGradient;
@@ -11148,7 +11309,7 @@ namespace TdApi {
     export type JsonValue = jsonValueNull | jsonValueBoolean | jsonValueNumber | jsonValueString | jsonValueArray | jsonValueObject;
     export type UserPrivacySettingRule = userPrivacySettingRuleAllowAll | userPrivacySettingRuleAllowContacts | userPrivacySettingRuleAllowUsers | userPrivacySettingRuleAllowChatMembers | userPrivacySettingRuleRestrictAll | userPrivacySettingRuleRestrictContacts | userPrivacySettingRuleRestrictUsers | userPrivacySettingRuleRestrictChatMembers;
     export type UserPrivacySettingRules = userPrivacySettingRules;
-    export type UserPrivacySetting = userPrivacySettingShowStatus | userPrivacySettingShowProfilePhoto | userPrivacySettingShowLinkInForwardedMessages | userPrivacySettingShowPhoneNumber | userPrivacySettingAllowChatInvites | userPrivacySettingAllowCalls | userPrivacySettingAllowPeerToPeerCalls | userPrivacySettingAllowFindingByPhoneNumber;
+    export type UserPrivacySetting = userPrivacySettingShowStatus | userPrivacySettingShowProfilePhoto | userPrivacySettingShowLinkInForwardedMessages | userPrivacySettingShowPhoneNumber | userPrivacySettingAllowChatInvites | userPrivacySettingAllowCalls | userPrivacySettingAllowPeerToPeerCalls | userPrivacySettingAllowFindingByPhoneNumber | userPrivacySettingAllowPrivateVoiceAndVideoNoteMessages;
     export type AccountTtl = accountTtl;
     export type SessionType = sessionTypeAndroid | sessionTypeApple | sessionTypeBrave | sessionTypeChrome | sessionTypeEdge | sessionTypeFirefox | sessionTypeIpad | sessionTypeIphone | sessionTypeLinux | sessionTypeMac | sessionTypeOpera | sessionTypeSafari | sessionTypeUbuntu | sessionTypeUnknown | sessionTypeVivaldi | sessionTypeWindows | sessionTypeXbox;
     export type Session = session;
@@ -11157,7 +11318,7 @@ namespace TdApi {
     export type ConnectedWebsites = connectedWebsites;
     export type ChatReportReason = chatReportReasonSpam | chatReportReasonViolence | chatReportReasonPornography | chatReportReasonChildAbuse | chatReportReasonCopyright | chatReportReasonUnrelatedLocation | chatReportReasonFake | chatReportReasonIllegalDrugs | chatReportReasonPersonalDetails | chatReportReasonCustom;
     export type TargetChat = targetChatCurrent | targetChatChosen | targetChatInternalLink;
-    export type InternalLinkType = internalLinkTypeActiveSessions | internalLinkTypeAttachmentMenuBot | internalLinkTypeAuthenticationCode | internalLinkTypeBackground | internalLinkTypeBotStart | internalLinkTypeBotStartInGroup | internalLinkTypeBotAddToChannel | internalLinkTypeChangePhoneNumber | internalLinkTypeChatInvite | internalLinkTypeFilterSettings | internalLinkTypeGame | internalLinkTypeInvoice | internalLinkTypeLanguagePack | internalLinkTypeLanguageSettings | internalLinkTypeMessage | internalLinkTypeMessageDraft | internalLinkTypePassportDataRequest | internalLinkTypePhoneNumberConfirmation | internalLinkTypePremiumFeatures | internalLinkTypePrivacyAndSecuritySettings | internalLinkTypeProxy | internalLinkTypePublicChat | internalLinkTypeQrCodeAuthentication | internalLinkTypeSettings | internalLinkTypeStickerSet | internalLinkTypeTheme | internalLinkTypeThemeSettings | internalLinkTypeUnknownDeepLink | internalLinkTypeUnsupportedProxy | internalLinkTypeUserPhoneNumber | internalLinkTypeVideoChat;
+    export type InternalLinkType = internalLinkTypeActiveSessions | internalLinkTypeAttachmentMenuBot | internalLinkTypeAuthenticationCode | internalLinkTypeBackground | internalLinkTypeBotStart | internalLinkTypeBotStartInGroup | internalLinkTypeBotAddToChannel | internalLinkTypeChangePhoneNumber | internalLinkTypeChatInvite | internalLinkTypeFilterSettings | internalLinkTypeGame | internalLinkTypeInvoice | internalLinkTypeLanguagePack | internalLinkTypeLanguageSettings | internalLinkTypeMessage | internalLinkTypeMessageDraft | internalLinkTypePassportDataRequest | internalLinkTypePhoneNumberConfirmation | internalLinkTypePremiumFeatures | internalLinkTypePrivacyAndSecuritySettings | internalLinkTypeProxy | internalLinkTypePublicChat | internalLinkTypeQrCodeAuthentication | internalLinkTypeRestorePurchases | internalLinkTypeSettings | internalLinkTypeStickerSet | internalLinkTypeTheme | internalLinkTypeThemeSettings | internalLinkTypeUnknownDeepLink | internalLinkTypeUnsupportedProxy | internalLinkTypeUserPhoneNumber | internalLinkTypeVideoChat;
     export type MessageLink = messageLink;
     export type MessageLinkInfo = messageLinkInfo;
     export type FilePart = filePart;
@@ -11205,6 +11366,7 @@ namespace TdApi {
     export type LogStream = logStreamDefault | logStreamFile | logStreamEmpty;
     export type LogVerbosityLevel = logVerbosityLevel;
     export type LogTags = logTags;
+    export type UserSupportInfo = userSupportInfo;
     export type TestInt = testInt;
     export type TestString = testString;
     export type TestBytes = testBytes;
@@ -11213,7 +11375,7 @@ namespace TdApi {
     export type TestVectorString = testVectorString;
     export type TestVectorStringObject = testVectorStringObject;
 
-    export type TdClass = Error | Ok | TdlibParameters | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | Poll | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | MessageForwardOrigin | MessageForwardInfo | MessageReplyInfo | MessageReaction | MessageInteractionInfo | UnreadReaction | MessageSendingState | Message | Messages | FoundMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | SponsoredMessage | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | DraftMessage | ChatType | ChatFilter | ChatFilterInfo | RecommendedChatFilter | RecommendedChatFilters | ChatList | ChatLists | ChatSource | ChatPosition | VideoChat | Chat | Chats | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | WebAppInfo | MessageThreadInfo | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | BankCardActionOpenUrl | BankCardInfo | Address | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceipt | InputInvoice | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | Reaction | Animations | DiceStickers | ImportedContacts | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | HttpUrl | InputInlineQueryResult | InlineQueryResult | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | PremiumLimit | PremiumFeatures | PremiumSource | PremiumFeaturePromotionAnimation | PremiumState | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | Background | Backgrounds | InputBackground | ThemeSettings | ChatTheme | Hashtags | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | AccountTtl | SessionType | Session | Sessions | ConnectedWebsite | ConnectedWebsites | ChatReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | ConnectionState | TopChatCategory | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsMessageInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | MessageStatistics | Point | VectorPathCommand | BotCommandScope | Update | Updates | LogStream | LogVerbosityLevel | LogTags | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
+    export type TdClass = Error | Ok | TdlibParameters | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerFormat | StickerType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | Poll | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | PremiumGiftOption | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | MessageForwardOrigin | MessageForwardInfo | MessageReplyInfo | MessageReaction | MessageInteractionInfo | UnreadReaction | MessageSendingState | Message | Messages | FoundMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | SponsoredMessage | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | DraftMessage | ChatType | ChatFilter | ChatFilterInfo | RecommendedChatFilter | RecommendedChatFilters | ChatList | ChatLists | ChatSource | ChatPosition | VideoChat | Chat | Chats | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | WebAppInfo | MessageThreadInfo | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | BankCardActionOpenUrl | BankCardInfo | Address | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentOption | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceipt | InputInvoice | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | Reaction | Animations | DiceStickers | ImportedContacts | SpeechRecognitionResult | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | HttpUrl | InputInlineQueryResult | InlineQueryResult | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | PremiumLimit | PremiumFeatures | PremiumSource | PremiumFeaturePromotionAnimation | PremiumState | StorePaymentPurpose | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | Background | Backgrounds | InputBackground | ThemeSettings | ChatTheme | Hashtags | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | AccountTtl | SessionType | Session | Sessions | ConnectedWebsite | ConnectedWebsites | ChatReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | ConnectionState | TopChatCategory | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsMessageInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | MessageStatistics | Point | VectorPathCommand | BotCommandScope | Update | Updates | LogStream | LogVerbosityLevel | LogTags | UserSupportInfo | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
     
     
     /** Returns the current authorization state; this is an offline request. For informational purposes only. Use updateAuthorizationState instead to maintain the current authorization state. Can be called before initialization */
@@ -11280,21 +11442,21 @@ namespace TdApi {
     }
     
     
-    /** Checks the authentication password for correctness. Works only when the current authorization state is authorizationStateWaitPassword */
+    /** Checks the 2-step verification password for correctness. Works only when the current authorization state is authorizationStateWaitPassword */
     export interface checkAuthenticationPassword {
         '@type': 'checkAuthenticationPassword';
-        /** The password to check */
+        /** The 2-step verification password to check */
         password?: string;
     }
     
     
-    /** Requests to send a password recovery code to an email address that was previously set up. Works only when the current authorization state is authorizationStateWaitPassword */
+    /** Requests to send a 2-step verification password recovery code to an email address that was previously set up. Works only when the current authorization state is authorizationStateWaitPassword */
     export interface requestAuthenticationPasswordRecovery {
         '@type': 'requestAuthenticationPasswordRecovery';
     }
     
     
-    /** Checks whether a password recovery code sent to an email address is valid. Works only when the current authorization state is authorizationStateWaitPassword */
+    /** Checks whether a 2-step verification password recovery code sent to an email address is valid. Works only when the current authorization state is authorizationStateWaitPassword */
     export interface checkAuthenticationPasswordRecoveryCode {
         '@type': 'checkAuthenticationPasswordRecoveryCode';
         /** Recovery code to check */
@@ -11302,12 +11464,12 @@ namespace TdApi {
     }
     
     
-    /** Recovers the password with a password recovery code sent to an email address that was previously set up. Works only when the current authorization state is authorizationStateWaitPassword */
+    /** Recovers the 2-step verification password with a password recovery code sent to an email address that was previously set up. Works only when the current authorization state is authorizationStateWaitPassword */
     export interface recoverAuthenticationPassword {
         '@type': 'recoverAuthenticationPassword';
         /** Recovery code to check */
         recovery_code?: string;
-        /** New password of the user; may be empty to remove the password */
+        /** New 2-step verification password of the user; may be empty to remove the password */
         new_password?: string;
         /** New password hint; may be empty */
         new_hint?: string;
@@ -11368,12 +11530,12 @@ namespace TdApi {
     }
     
     
-    /** Changes the password for the current user. If a new recovery email address is specified, then the change will not be applied until the new recovery email address is confirmed */
+    /** Changes the 2-step verification password for the current user. If a new recovery email address is specified, then the change will not be applied until the new recovery email address is confirmed */
     export interface setPassword {
         '@type': 'setPassword';
-        /** Previous password of the user */
+        /** Previous 2-step verification password of the user */
         old_password?: string;
-        /** New password of the user; may be empty to remove the password */
+        /** New 2-step verification password of the user; may be empty to remove the password */
         new_password?: string;
         /** New password hint; may be empty */
         new_hint?: string;
@@ -11387,7 +11549,7 @@ namespace TdApi {
     /** Returns a 2-step verification recovery email address that was previously set up. This method can be used to verify a password provided by the user */
     export interface getRecoveryEmailAddress {
         '@type': 'getRecoveryEmailAddress';
-        /** The password for the current user */
+        /** The 2-step verification password for the current user */
         password?: string;
     }
     
@@ -11395,7 +11557,7 @@ namespace TdApi {
     /** Changes the 2-step verification recovery email address of the user. If a new recovery email address is specified, then the change will not be applied until the new recovery email address is confirmed. -If new_recovery_email_address is the same as the email address that is currently set up, this call succeeds immediately and aborts all other requests waiting for an email confirmation */
     export interface setRecoveryEmailAddress {
         '@type': 'setRecoveryEmailAddress';
-        /** Password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
         /** New recovery email address */
         new_recovery_email_address?: string;
@@ -11435,7 +11597,7 @@ namespace TdApi {
         '@type': 'recoverPassword';
         /** Recovery code to check */
         recovery_code?: string;
-        /** New password of the user; may be empty to remove the password */
+        /** New 2-step verification password of the user; may be empty to remove the password */
         new_password?: string;
         /** New password hint; may be empty */
         new_hint?: string;
@@ -11457,7 +11619,7 @@ namespace TdApi {
     /** Creates a new temporary password for processing payments */
     export interface createTemporaryPassword {
         '@type': 'createTemporaryPassword';
-        /** Persistent user password */
+        /** The 2-step verification password of the current user */
         password?: string;
         /** Time during which the temporary password will be valid, in seconds; must be between 60 and 86400 */
         valid_for?: int32;
@@ -11916,7 +12078,7 @@ namespace TdApi {
     }
     
     
-    /** Searches for call messages. Returns the results in reverse chronological order (i. e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib */
+    /** Searches for call messages. Returns the results in reverse chronological order (i.e., in order of decreasing message_id). For optimal performance, the number of returned messages is chosen by TDLib */
     export interface searchCallMessages {
         '@type': 'searchCallMessages';
         /** Identifier of the message from which to search; use 0 to get results from the last message */
@@ -12452,7 +12614,7 @@ namespace TdApi {
     }
     
     
-    /** Returns reactions, which can be added to a message. The list can change after updateReactions, updateChatAvailableReactions for the chat, or updateMessageInteractionInfo for the message. The method will return Premium reactions, even the current user has no Premium subscription */
+    /** Returns reactions, which can be added to a message. The list can change after updateReactions, updateChatAvailableReactions for the chat, or updateMessageInteractionInfo for the message */
     export interface getMessageAvailableReactions {
         '@type': 'getMessageAvailableReactions';
         /** Identifier of the chat to which the message belongs */
@@ -12500,7 +12662,7 @@ namespace TdApi {
     }
     
     
-    /** Parses Bold, Italic, Underline, Strikethrough, Spoiler, Code, Pre, PreCode, TextUrl and MentionName entities contained in the text. Can be called synchronously */
+    /** Parses Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, Code, Pre, PreCode, TextUrl and MentionName entities contained in the text. Can be called synchronously */
     export interface parseTextEntities {
         '@type': 'parseTextEntities';
         /** The text to parse */
@@ -13199,7 +13361,7 @@ namespace TdApi {
         '@type': 'setChatNotificationSettings';
         /** Chat identifier */
         chat_id?: int53;
-        /** New notification settings for the chat. If the chat is muted for more than 1 week, it is considered to be muted forever */
+        /** New notification settings for the chat. If the chat is muted for more than 366 days, it is considered to be muted forever */
         notification_settings?: chatNotificationSettings;
     }
     
@@ -13403,7 +13565,7 @@ namespace TdApi {
         chat_id?: int53;
         /** Identifier of the user to which transfer the ownership. The ownership can't be transferred to a bot or to a deleted user */
         user_id?: int53;
-        /** The password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
     }
     
@@ -13588,21 +13750,21 @@ namespace TdApi {
     }
     
     
-    /** Asynchronously uploads a file to the cloud without sending it in a message. updateFile will be used to notify about upload progress and successful completion of the upload. The file will not have a persistent remote identifier until it will be sent in a message */
-    export interface uploadFile {
-        '@type': 'uploadFile';
+    /** Preliminary uploads a file to the cloud before sending it in a message, which can be useful for uploading of being recorded voice and video notes. Updates updateFile will be used to notify about upload progress and successful completion of the upload. The file will not have a persistent remote identifier until it will be sent in a message */
+    export interface preliminaryUploadFile {
+        '@type': 'preliminaryUploadFile';
         /** File to upload */
         file?: InputFile;
         /** File type; pass null if unknown */
         file_type?: FileType;
-        /** Priority of the upload (1-32). The higher the priority, the earlier the file will be uploaded. If the priorities of two files are equal, then the first one for which uploadFile was called will be uploaded first */
+        /** Priority of the upload (1-32). The higher the priority, the earlier the file will be uploaded. If the priorities of two files are equal, then the first one for which preliminaryUploadFile was called will be uploaded first */
         priority?: int32;
     }
     
     
-    /** Stops the uploading of a file. Supported only for files uploaded by using uploadFile. For other files the behavior is undefined */
-    export interface cancelUploadFile {
-        '@type': 'cancelUploadFile';
+    /** Stops the preliminary uploading of a file. Supported only for files uploaded by using preliminaryUploadFile. For other files the behavior is undefined */
+    export interface cancelPreliminaryUploadFile {
+        '@type': 'cancelPreliminaryUploadFile';
         /** Identifier of the file to stop uploading */
         file_id?: int32;
     }
@@ -14456,13 +14618,17 @@ namespace TdApi {
     }
     
     
-    /** Returns stickers from the installed sticker sets that correspond to a given emoji. If the emoji is non-empty, favorite and recently used stickers may also be returned */
+    /** Returns stickers from the installed sticker sets that correspond to a given emoji. If the emoji is non-empty, then favorite, recently used or trending stickers may also be returned */
     export interface getStickers {
         '@type': 'getStickers';
+        /** Type of the sticker sets to return */
+        sticker_type?: StickerType;
         /** String representation of emoji. If empty, returns all known installed stickers */
         emoji?: string;
         /** The maximum number of stickers to be returned */
         limit?: int32;
+        /** Chat identifier for which to return stickers. Available custom emoji may be different for different chats */
+        chat_id?: int53;
     }
     
     
@@ -14471,7 +14637,15 @@ namespace TdApi {
         '@type': 'searchStickers';
         /** String representation of emoji; must be non-empty */
         emoji?: string;
-        /** The maximum number of stickers to be returned */
+        /** The maximum number of stickers to be returned; 0-100 */
+        limit?: int32;
+    }
+    
+    
+    /** Returns premium stickers from regular sticker sets */
+    export interface getPremiumStickers {
+        '@type': 'getPremiumStickers';
+        /** The maximum number of stickers to be returned; 0-100 */
         limit?: int32;
     }
     
@@ -14479,16 +14653,16 @@ namespace TdApi {
     /** Returns a list of installed sticker sets */
     export interface getInstalledStickerSets {
         '@type': 'getInstalledStickerSets';
-        /** Pass true to return mask sticker sets; pass false to return ordinary sticker sets */
-        is_masks?: Bool;
+        /** Type of the sticker sets to return */
+        sticker_type?: StickerType;
     }
     
     
     /** Returns a list of archived sticker sets */
     export interface getArchivedStickerSets {
         '@type': 'getArchivedStickerSets';
-        /** Pass true to return mask stickers sets; pass false to return ordinary sticker sets */
-        is_masks?: Bool;
+        /** Type of the sticker sets to return */
+        sticker_type?: StickerType;
         /** Identifier of the sticker set from which to return the result */
         offset_sticker_set_id?: int64;
         /** The maximum number of sticker sets to return; up to 100 */
@@ -14499,6 +14673,8 @@ namespace TdApi {
     /** Returns a list of trending sticker sets. For optimal performance, the number of returned sticker sets is chosen by TDLib */
     export interface getTrendingStickerSets {
         '@type': 'getTrendingStickerSets';
+        /** Type of the sticker sets to return */
+        sticker_type?: StickerType;
         /** The offset from which to return the sticker sets; must be non-negative */
         offset?: int32;
         /** The maximum number of sticker sets to be returned; up to 100. For optimal performance, the number of returned sticker sets is chosen by TDLib and can be smaller than the specified limit, even if the end of the list has not been reached */
@@ -14533,8 +14709,8 @@ namespace TdApi {
     /** Searches for installed sticker sets by looking for specified query in their title and name */
     export interface searchInstalledStickerSets {
         '@type': 'searchInstalledStickerSets';
-        /** Pass true to return mask sticker sets; pass false to return ordinary sticker sets */
-        is_masks?: Bool;
+        /** Type of the sticker sets to search for */
+        sticker_type?: StickerType;
         /** Query to search for */
         query?: string;
         /** The maximum number of sticker sets to return */
@@ -14573,8 +14749,8 @@ namespace TdApi {
     /** Changes the order of installed sticker sets */
     export interface reorderInstalledStickerSets {
         '@type': 'reorderInstalledStickerSets';
-        /** Pass true to change the order of mask sticker sets; pass false to change the order of ordinary sticker sets */
-        is_masks?: Bool;
+        /** Type of the sticker sets to reorder */
+        sticker_type?: StickerType;
         /** Identifiers of installed sticker sets in the new correct order */
         sticker_set_ids?: vector<int64>;
     }
@@ -14588,7 +14764,7 @@ namespace TdApi {
     }
     
     
-    /** Manually adds a new sticker to the list of recently used stickers. The new sticker is added to the top of the list. If the sticker was already in the list, it is removed from the list first. Only stickers belonging to a sticker set can be added to this list */
+    /** Manually adds a new sticker to the list of recently used stickers. The new sticker is added to the top of the list. If the sticker was already in the list, it is removed from the list first. Only stickers belonging to a sticker set can be added to this list. Emoji stickers can't be added to recent stickers */
     export interface addRecentSticker {
         '@type': 'addRecentSticker';
         /** Pass true to add the sticker to the list of stickers recently attached to photo or video files; pass false to add the sticker to the list of recently sent stickers */
@@ -14622,7 +14798,7 @@ namespace TdApi {
     }
     
     
-    /** Adds a new sticker to the list of favorite stickers. The new sticker is added to the top of the list. If the sticker was already in the list, it is removed from the list first. Only stickers belonging to a sticker set can be added to this list */
+    /** Adds a new sticker to the list of favorite stickers. The new sticker is added to the top of the list. If the sticker was already in the list, it is removed from the list first. Only stickers belonging to a sticker set can be added to this list. Emoji stickers can't be added to favorite stickers */
     export interface addFavoriteSticker {
         '@type': 'addFavoriteSticker';
         /** Sticker file to add */
@@ -14666,17 +14842,19 @@ namespace TdApi {
     }
     
     
-    /** Returns all emojis, which has a corresponding animated emoji */
-    export interface getAllAnimatedEmojis {
-        '@type': 'getAllAnimatedEmojis';
-    }
-    
-    
     /** Returns an HTTP URL which can be used to automatically log in to the translation platform and suggest new emoji replacements. The URL will be valid for 30 seconds after generation */
     export interface getEmojiSuggestionsUrl {
         '@type': 'getEmojiSuggestionsUrl';
         /** Language code for which the emoji replacements will be suggested */
         language_code?: string;
+    }
+    
+    
+    /** Returns list of custom emoji stickers by their identifiers. Stickers are returned in arbitrary order. Only found stickers are returned */
+    export interface getCustomEmojiStickers {
+        '@type': 'getCustomEmojiStickers';
+        /** Identifiers of custom emoji stickers. At most 200 custom emoji stickers can be received simultaneously */
+        custom_emoji_ids?: vector<int64>;
     }
     
     
@@ -15052,7 +15230,7 @@ namespace TdApi {
     }
     
     
-    /** Returns a list of service actions taken by chat members and administrators in the last 48 hours. Available only for supergroups and channels. Requires administrator rights. Returns results in reverse chronological order (i. e., in order of decreasing event_id) */
+    /** Returns a list of service actions taken by chat members and administrators in the last 48 hours. Available only for supergroups and channels. Requires administrator rights. Returns results in reverse chronological order (i.e., in order of decreasing event_id) */
     export interface getChatEventLog {
         '@type': 'getChatEventLog';
         /** Chat identifier */
@@ -15334,7 +15512,7 @@ namespace TdApi {
     }
     
     
-    /** Returns the value of an option by its name. (Check the list of available options on https://core.telegram.org/tdlib/options.) Can be called before authorization */
+    /** Returns the value of an option by its name. (Check the list of available options on https://core.telegram.org/tdlib/options.) Can be called before authorization. Can be called synchronously for options "version" and "commit_hash" */
     export interface getOption {
         '@type': 'getOption';
         /** The name of the option */
@@ -15371,6 +15549,8 @@ namespace TdApi {
         '@type': 'deleteAccount';
         /** The reason why the account was deleted; optional */
         reason?: string;
+        /** The 2-step verification password of the current user. If not specified, account deletion can be canceled within one week */
+        password?: string;
     }
     
     
@@ -15509,7 +15689,7 @@ namespace TdApi {
         '@type': 'getPassportElement';
         /** Telegram Passport element type */
         type?: PassportElementType;
-        /** Password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
     }
     
@@ -15517,7 +15697,7 @@ namespace TdApi {
     /** Returns all available Telegram Passport elements */
     export interface getAllPassportElements {
         '@type': 'getAllPassportElements';
-        /** Password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
     }
     
@@ -15527,7 +15707,7 @@ namespace TdApi {
         '@type': 'setPassportElement';
         /** Input Telegram Passport element */
         element?: InputPassportElement;
-        /** Password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
     }
     
@@ -15623,7 +15803,7 @@ namespace TdApi {
         '@type': 'getPassportAuthorizationFormAvailableElements';
         /** Authorization form identifier */
         autorization_form_id?: int32;
-        /** Password of the current user */
+        /** The 2-step verification password of the current user */
         password?: string;
     }
     
@@ -15709,6 +15889,8 @@ namespace TdApi {
         title?: string;
         /** Sticker set name. Can contain only English letters, digits and underscores. Must end with *"_by_<bot username>"* (*<bot_username>* is case insensitive) for bots; 1-64 characters */
         name?: string;
+        /** Type of the stickers in the set */
+        sticker_type?: StickerType;
         /** List of stickers to be added to the set; must be non-empty. All stickers must have the same format. For TGS stickers, uploadStickerFile must be used before the sticker is shown */
         stickers?: vector<inputSticker>;
         /** Source of the sticker set; may be empty if unknown */
@@ -15793,8 +15975,8 @@ namespace TdApi {
     
     
     /** Returns examples of premium stickers for demonstration purposes */
-    export interface getPremiumStickers {
-        '@type': 'getPremiumStickers';
+    export interface getPremiumStickerExamples {
+        '@type': 'getPremiumStickerExamples';
     }
     
     
@@ -15821,24 +16003,32 @@ namespace TdApi {
     /** Checks whether Telegram Premium purchase is possible. Must be called before in-store Premium purchase */
     export interface canPurchasePremium {
         '@type': 'canPurchasePremium';
+        /** Transaction purpose */
+        purpose?: StorePaymentPurpose;
     }
     
     
-    /** Informs server about a Telegram Premium purchase through App Store. For official applications only */
+    /** Informs server about a purchase through App Store. For official applications only */
     export interface assignAppStoreTransaction {
         '@type': 'assignAppStoreTransaction';
         /** App Store receipt */
         receipt?: bytes;
-        /** Pass true if this is a restore of a Telegram Premium purchase */
-        is_restore?: Bool;
+        /** Transaction purpose */
+        purpose?: StorePaymentPurpose;
     }
     
     
-    /** Informs server about a Telegram Premium purchase through Google Play. For official applications only */
+    /** Informs server about a purchase through Google Play. For official applications only */
     export interface assignGooglePlayTransaction {
         '@type': 'assignGooglePlayTransaction';
+        /** Application package name */
+        package_name?: string;
+        /** Identifier of the purchased store product */
+        store_product_id?: string;
         /** Google Play purchase token */
         purchase_token?: string;
+        /** Transaction purpose */
+        purpose?: StorePaymentPurpose;
     }
     
     
@@ -16062,6 +16252,24 @@ namespace TdApi {
     }
     
     
+    /** Returns support information for the given user; for Telegram support only */
+    export interface getUserSupportInfo {
+        '@type': 'getUserSupportInfo';
+        /** User identifier */
+        user_id?: int53;
+    }
+    
+    
+    /** Sets support information for the given user; for Telegram support only */
+    export interface setUserSupportInfo {
+        '@type': 'setUserSupportInfo';
+        /** User identifier */
+        user_id?: int53;
+        /** New information message */
+        message?: formattedText;
+    }
+    
+    
     /** Does nothing; for testing only. This is an offline method. Can be called before authorization */
     export interface testCallEmpty {
         '@type': 'testCallEmpty';
@@ -16173,7 +16381,7 @@ namespace TdApi {
         new_verbosity_level?: jsLogLevel;
     }
     
-    export type TdFunction = getAuthorizationState | setTdlibParameters | checkDatabaseEncryptionKey | setAuthenticationPhoneNumber | resendAuthenticationCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getTopChats | removeTopChat | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchCallMessages | searchOutgoingDocumentMessages | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatScheduledMessages | getMessagePublicForwards | getChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | resendMessages | sendChatScreenshotTakenNotification | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | getMessageAvailableReactions | setMessageReaction | getMessageAddedReactions | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | getLoginUrlInfo | getLoginUrl | getInlineQueryResults | answerInlineQuery | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllChatReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFilter | createChatFilter | editChatFilter | deleteChatFilter | reorderChatFilters | getRecommendedChatFilters | getChatFilterDefaultIconName | setChatTitle | setChatPhoto | setChatMessageTtl | setChatPermissions | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | downloadFile | cancelDownloadFile | getSuggestedFileName | uploadFile | cancelUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | toggleMessageSenderIsBlocked | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | searchStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getAnimatedEmoji | getAllAnimatedEmojis | getEmojiSuggestionsUrl | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setName | setBio | setUsername | setLocation | changePhoneNumber | resendChangePhoneNumberCode | checkChangePhoneNumberCode | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | getActiveSessions | terminateSession | terminateAllOtherSessions | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | setSupergroupStickerSet | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | getSupergroupMembers | closeSecretChat | getChatEventLog | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | getSupportUser | getBackgrounds | getBackgroundUrl | searchBackground | setBackground | removeBackground | resetBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | removeChatActionBar | reportChat | reportChatPhoto | getChatStatistics | getMessageStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendPhoneNumberVerificationCode | resendPhoneNumberVerificationCode | checkPhoneNumberVerificationCode | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | sendPhoneNumberConfirmationCode | resendPhoneNumberConfirmationCode | checkPhoneNumberConfirmationCode | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | setStickerSetThumbnail | setStickerPositionInSet | removeStickerFromSet | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickers | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | canPurchasePremium | assignAppStoreTransaction | assignGooglePlayTransaction | acceptTermsOfService | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getApplicationDownloadLink | getDeepLinkInfo | getApplicationConfig | saveApplicationLogEvent | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
+    export type TdFunction = getAuthorizationState | setTdlibParameters | checkDatabaseEncryptionKey | setAuthenticationPhoneNumber | resendAuthenticationCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getTopChats | removeTopChat | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchCallMessages | searchOutgoingDocumentMessages | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatScheduledMessages | getMessagePublicForwards | getChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | resendMessages | sendChatScreenshotTakenNotification | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | getMessageAvailableReactions | setMessageReaction | getMessageAddedReactions | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | getLoginUrlInfo | getLoginUrl | getInlineQueryResults | answerInlineQuery | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllChatReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFilter | createChatFilter | editChatFilter | deleteChatFilter | reorderChatFilters | getRecommendedChatFilters | getChatFilterDefaultIconName | setChatTitle | setChatPhoto | setChatMessageTtl | setChatPermissions | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | downloadFile | cancelDownloadFile | getSuggestedFileName | preliminaryUploadFile | cancelPreliminaryUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | toggleMessageSenderIsBlocked | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | searchStickers | getPremiumStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getAnimatedEmoji | getEmojiSuggestionsUrl | getCustomEmojiStickers | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setName | setBio | setUsername | setLocation | changePhoneNumber | resendChangePhoneNumberCode | checkChangePhoneNumberCode | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | getActiveSessions | terminateSession | terminateAllOtherSessions | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | setSupergroupStickerSet | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | getSupergroupMembers | closeSecretChat | getChatEventLog | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | getSupportUser | getBackgrounds | getBackgroundUrl | searchBackground | setBackground | removeBackground | resetBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | removeChatActionBar | reportChat | reportChatPhoto | getChatStatistics | getMessageStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendPhoneNumberVerificationCode | resendPhoneNumberVerificationCode | checkPhoneNumberVerificationCode | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | sendPhoneNumberConfirmationCode | resendPhoneNumberConfirmationCode | checkPhoneNumberConfirmationCode | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | setStickerSetThumbnail | setStickerPositionInSet | removeStickerFromSet | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickerExamples | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | canPurchasePremium | assignAppStoreTransaction | assignGooglePlayTransaction | acceptTermsOfService | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getApplicationDownloadLink | getDeepLinkInfo | getApplicationConfig | saveApplicationLogEvent | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | getUserSupportInfo | setUserSupportInfo | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
     export type TdFunctionReturn<t> = 
     t extends getAuthorizationState ? AuthorizationState :
         t extends setTdlibParameters ? Ok :
@@ -16406,8 +16614,8 @@ namespace TdApi {
         t extends downloadFile ? File :
         t extends cancelDownloadFile ? Ok :
         t extends getSuggestedFileName ? Text :
-        t extends uploadFile ? File :
-        t extends cancelUploadFile ? Ok :
+        t extends preliminaryUploadFile ? File :
+        t extends cancelPreliminaryUploadFile ? Ok :
         t extends writeGeneratedFilePart ? Ok :
         t extends setFileGenerationProgress ? Ok :
         t extends finishFileGeneration ? Ok :
@@ -16490,6 +16698,7 @@ namespace TdApi {
         t extends getUserProfilePhotos ? ChatPhotos :
         t extends getStickers ? Stickers :
         t extends searchStickers ? Stickers :
+        t extends getPremiumStickers ? Stickers :
         t extends getInstalledStickerSets ? StickerSets :
         t extends getArchivedStickerSets ? StickerSets :
         t extends getTrendingStickerSets ? TrendingStickerSets :
@@ -16511,8 +16720,8 @@ namespace TdApi {
         t extends getStickerEmojis ? Emojis :
         t extends searchEmojis ? Emojis :
         t extends getAnimatedEmoji ? AnimatedEmoji :
-        t extends getAllAnimatedEmojis ? Emojis :
         t extends getEmojiSuggestionsUrl ? HttpUrl :
+        t extends getCustomEmojiStickers ? Stickers :
         t extends getSavedAnimations ? Animations :
         t extends addSavedAnimation ? Ok :
         t extends removeSavedAnimation ? Ok :
@@ -16636,7 +16845,7 @@ namespace TdApi {
         t extends getMapThumbnailFile ? File :
         t extends getPremiumLimit ? PremiumLimit :
         t extends getPremiumFeatures ? PremiumFeatures :
-        t extends getPremiumStickers ? Stickers :
+        t extends getPremiumStickerExamples ? Stickers :
         t extends viewPremiumFeature ? Ok :
         t extends clickPremiumSubscriptionButton ? Ok :
         t extends getPremiumState ? PremiumState :
@@ -16670,6 +16879,8 @@ namespace TdApi {
         t extends setLogTagVerbosityLevel ? Ok :
         t extends getLogTagVerbosityLevel ? LogVerbosityLevel :
         t extends addLogMessage ? Ok :
+        t extends getUserSupportInfo ? UserSupportInfo :
+        t extends setUserSupportInfo ? UserSupportInfo :
         t extends testCallEmpty ? Ok :
         t extends testCallString ? TestString :
         t extends testCallBytes ? TestBytes :
