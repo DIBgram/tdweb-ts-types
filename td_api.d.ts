@@ -815,7 +815,7 @@ namespace TdApi {
         title: string;
         /** Game text, usually containing scoreboards for a game */
         text: formattedText;
-        /** Describes a game */
+        /** Game description */
         description: string;
         /** Game photo */
         photo: photo;
@@ -921,7 +921,7 @@ namespace TdApi {
         '@type': 'botCommand';
         /** Text of the bot command */
         command: string;
-        /** Represents a command supported by a bot */
+        /** Description of the bot command */
         description: string;
     }
     
@@ -1139,7 +1139,7 @@ namespace TdApi {
         '@type': 'botInfo';
         /** The text that is shown on the bot's profile page and is sent together with the link when users share the bot */
         share_text: string;
-        /** Contains information about a bot */
+        /** The text shown in the chat with the bot if the chat is empty */
         description: string;
         /** Photo shown in the chat with the bot if the chat is empty; may be null */
         photo?: photo;
@@ -1495,7 +1495,7 @@ namespace TdApi {
         title: string;
         /** Chat photo; may be null */
         photo?: chatPhotoInfo;
-        /** Contains information about a chat invite link */
+        /** Chat description */
         description: string;
         /** Number of members in the chat */
         member_count: int32;
@@ -1561,7 +1561,7 @@ namespace TdApi {
         '@type': 'basicGroupFullInfo';
         /** Chat photo; may be null */
         photo?: chatPhoto;
-        /** Contains full information about a basic group */
+        /** Group description. Updated only after the basic group is opened */
         description: string;
         /** User identifier of the creator of the group; 0 if unknown */
         creator_user_id: int53;
@@ -1619,7 +1619,7 @@ namespace TdApi {
         '@type': 'supergroupFullInfo';
         /** Chat photo; may be null */
         photo?: chatPhoto;
-        /** Contains full information about a supergroup or channel */
+        /** Supergroup or channel description */
         description: string;
         /** Number of members in the supergroup or channel; 0 if unknown */
         member_count: int32;
@@ -2221,7 +2221,7 @@ namespace TdApi {
         '@type': 'recommendedChatFilter';
         /** The chat filter */
         filter: chatFilter;
-        /** Describes a recommended chat filter */
+        /** Chat filter description */
         description: string;
     }
     
@@ -2929,7 +2929,7 @@ namespace TdApi {
         url: string;
         /** Article title; may be empty */
         title: string;
-        /** Contains information about a related article */
+        /** Article description; may be empty */
         description: string;
         /** Article photo; may be null */
         photo?: photo;
@@ -3279,7 +3279,7 @@ namespace TdApi {
         site_name: string;
         /** Title of the content */
         title: string;
-        /** Describes a web page preview */
+        /** Description of the content */
         description: formattedText;
         /** Image representing the content; may be null */
         photo?: photo;
@@ -3617,7 +3617,7 @@ namespace TdApi {
         '@type': 'paymentReceipt';
         /** Product title */
         title: string;
-        /** Contains information about a successful payment */
+        /** Product description */
         description: formattedText;
         /** Product photo; may be null */
         photo?: photo;
@@ -4485,7 +4485,7 @@ namespace TdApi {
         '@type': 'messageInvoice';
         /** Product title */
         title: string;
-        /** A message with an invoice from a bot */
+        /** Product description */
         description: formattedText;
         /** Product photo; may be null */
         photo?: photo;
@@ -5205,7 +5205,7 @@ namespace TdApi {
         invoice: invoice;
         /** Product title; 1-32 characters */
         title: string;
-        /** A message with an invoice; can be used only by bots */
+        /** Product description; 0-255 characters */
         description: string;
         /** Product photo URL; optional */
         photo_url: string;
@@ -6263,7 +6263,7 @@ namespace TdApi {
         hide_url: Bool;
         /** Title of the result */
         title: string;
-        /** Represents a link to an article or web page */
+        /** A short description of the result */
         description: string;
         /** URL of the result thumbnail, if it exists */
         thumbnail_url: string;
@@ -6325,7 +6325,7 @@ namespace TdApi {
         id: string;
         /** Title of the resulting file */
         title: string;
-        /** Represents a link to a file */
+        /** Short description of the result, if known */
         description: string;
         /** URL of the file */
         document_url: string;
@@ -6387,7 +6387,7 @@ namespace TdApi {
         id: string;
         /** Title of the result, if known */
         title: string;
-        /** Represents link to a JPEG image */
+        /** A short description of the result, if known */
         description: string;
         /** URL of the photo thumbnail, if it exists */
         thumbnail_url: string;
@@ -6451,7 +6451,7 @@ namespace TdApi {
         id: string;
         /** Title of the result */
         title: string;
-        /** Represents a link to a page containing an embedded video player or a video file */
+        /** A short description of the result, if known */
         description: string;
         /** The URL of the video thumbnail (JPEG), if it exists */
         thumbnail_url: string;
@@ -6501,7 +6501,7 @@ namespace TdApi {
         hide_url: Bool;
         /** Title of the result */
         title: string;
-        /** Represents a link to an article or web page */
+        /** A short description of the result */
         description: string;
         /** Result thumbnail in JPEG format; may be null */
         thumbnail?: thumbnail;
@@ -6587,7 +6587,7 @@ namespace TdApi {
         document: document;
         /** Document title */
         title: string;
-        /** Represents a document */
+        /** Document description */
         description: string;
     }
     
@@ -6601,7 +6601,7 @@ namespace TdApi {
         photo: photo;
         /** Title of the result, if known */
         title: string;
-        /** Represents a photo */
+        /** A short description of the result, if known */
         description: string;
     }
     
@@ -6625,7 +6625,7 @@ namespace TdApi {
         video: video;
         /** Title of the video */
         title: string;
-        /** Represents a video */
+        /** Description of the video */
         description: string;
     }
     
@@ -13193,7 +13193,7 @@ namespace TdApi {
         title?: string;
         /** Pass true to create a channel chat */
         is_channel?: Bool;
-        /** Creates a new supergroup or channel and sends a corresponding messageSupergroupChatCreate. Returns the newly created chat */
+        /** Chat description; 0-255 characters */
         description?: string;
         /** Chat location if a location-based supergroup is being created; pass null to create an ordinary supergroup chat */
         location?: chatLocation;
@@ -13421,7 +13421,7 @@ namespace TdApi {
         '@type': 'setChatDescription';
         /** Identifier of the chat */
         chat_id?: int53;
-        /** Changes information about a chat. Available for basic groups, supergroups, and channels. Requires can_change_info administrator right */
+        /** New chat description; 0-255 characters */
         description?: string;
     }
     

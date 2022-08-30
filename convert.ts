@@ -106,7 +106,9 @@ function parseDocumentation(documentation: string) {
     parts.slice(1).forEach((part) => {
         const [name, ...description] = part.split(' ');
         obj[name] = description.join(' ');
-    })
+    });
+    obj._ = obj.description;
+    obj.description = obj.param_description;
     return obj;
 }
 
@@ -215,7 +217,7 @@ export default TdApi;
 
 function transpileType(type: TLDeclaration, isFunction?: boolean) {
     let transpiled = `
-    ${type.documentation.description ? '/** '+type.documentation.description.trim()+' */' : ''}
+    ${type.documentation._ ? '/** '+type.documentation._.trim()+' */' : ''}
     export interface ${type.type.subclass} {
         '@type': '${type.type.subclass}';`;
 
