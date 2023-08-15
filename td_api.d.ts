@@ -470,7 +470,7 @@ namespace TdApi {
     }
     
     
-    /** The thumbnail is in static GIF format. It will be used only for some bot inline results */
+    /** The thumbnail is in static GIF format. It will be used only for some bot inline query results */
     export interface thumbnailFormatGif {
         '@type': 'thumbnailFormatGif';
     }
@@ -1419,8 +1419,8 @@ namespace TdApi {
         photo?: chatPhoto;
         /** User profile photo visible if the main photo is hidden by privacy settings; may be null. If null and user.profile_photo is null, then the photo is empty; otherwise, it is unknown. -If non-null and both photo and personal_photo are null, then it is the same photo as in user.profile_photo and chat.photo. This photo isn't returned in the list of user photos */
         public_photo?: chatPhoto;
-        /** True, if the user is blocked by the current user */
-        is_blocked: Bool;
+        /** Block list to which the user is added; may be null if none */
+        block_list?: BlockList;
         /** True, if the user can be called */
         can_be_called: Bool;
         /** True, if a video call can be created with the user */
@@ -1441,7 +1441,7 @@ namespace TdApi {
         premium_gift_options: vector<premiumPaymentOption>;
         /** Number of group chats where both the other user and the current user are a member; 0 for the current user */
         group_in_common_count: int32;
-        /** For bots, information about the bot; may be null */
+        /** For bots, information about the bot; may be null if the user isn't a bot */
         bot_info?: botInfo;
     }
     
@@ -1923,7 +1923,7 @@ namespace TdApi {
         has_aggressive_anti_spam_enabled: Bool;
         /** Identifier of the supergroup sticker set; 0 if none */
         sticker_set_id: int64;
-        /** Location to which the supergroup is connected; may be null */
+        /** Location to which the supergroup is connected; may be null if none */
         location?: chatLocation;
         /** Primary invite link for the chat; may be null. For chat administrators with can_invite_users right only */
         invite_link?: chatInviteLink;
@@ -2221,9 +2221,9 @@ namespace TdApi {
         sender_id: MessageSender;
         /** Chat identifier */
         chat_id: int53;
-        /** The sending state of the message; may be null */
+        /** The sending state of the message; may be null if the message isn't being sent and didn't fail to be sent */
         sending_state?: MessageSendingState;
-        /** The scheduling state of the message; may be null */
+        /** The scheduling state of the message; may be null if the message isn't scheduled */
         scheduling_state?: MessageSchedulingState;
         /** True, if the message is outgoing */
         is_outgoing: Bool;
@@ -2263,9 +2263,9 @@ namespace TdApi {
         date: int32;
         /** Point in time (Unix timestamp) when the message was last edited */
         edit_date: int32;
-        /** Information about the initial message sender; may be null */
+        /** Information about the initial message sender; may be null if none or unknown */
         forward_info?: messageForwardInfo;
-        /** Information about interactions with the message; may be null */
+        /** Information about interactions with the message; may be null if none */
         interaction_info?: messageInteractionInfo;
         /** Information about unread reactions added to the message */
         unread_reactions: vector<unreadReaction>;
@@ -2289,7 +2289,7 @@ namespace TdApi {
         restriction_reason: string;
         /** Content of the message */
         content: MessageContent;
-        /** Reply markup for the message; may be null */
+        /** Reply markup for the message; may be null if none */
         reply_markup?: ReplyMarkup;
     }
     
@@ -2893,20 +2893,20 @@ namespace TdApi {
         photo?: chatPhotoInfo;
         /** Actions that non-administrator chat members are allowed to take in the chat */
         permissions: chatPermissions;
-        /** Last message in the chat; may be null */
+        /** Last message in the chat; may be null if none or unknown */
         last_message?: message;
         /** Positions of the chat in chat lists */
         positions: vector<chatPosition>;
         /** Identifier of a user or chat that is selected to send messages in the chat; may be null if the user can't change message sender */
         message_sender_id?: MessageSender;
+        /** Block list to which the chat is added; may be null if none */
+        block_list?: BlockList;
         /** True, if chat content can't be saved locally, forwarded, or copied */
         has_protected_content: Bool;
         /** True, if translation of all messages in the chat must be suggested to the user */
         is_translatable: Bool;
         /** True, if the chat is marked as unread */
         is_marked_as_unread: Bool;
-        /** True, if the chat is blocked by the current user and private messages from the chat can't be received */
-        is_blocked: Bool;
         /** True, if the chat has scheduled messages */
         has_scheduled_messages: Bool;
         /** True, if the chat messages can be deleted only for the current user while other users will continue to see the messages */
@@ -2937,15 +2937,15 @@ namespace TdApi {
         background?: chatBackground;
         /** If non-empty, name of a theme, set for the chat */
         theme_name: string;
-        /** Information about actions which must be possible to do through the chat action bar; may be null */
+        /** Information about actions which must be possible to do through the chat action bar; may be null if none */
         action_bar?: ChatActionBar;
         /** Information about video chat of the chat */
         video_chat: videoChat;
-        /** Information about pending join requests; may be null */
+        /** Information about pending join requests; may be null if none */
         pending_join_requests?: chatJoinRequestsInfo;
         /** Identifier of the message from which reply markup needs to be used; 0 if there is no default custom reply markup in the chat */
         reply_markup_message_id: int53;
-        /** A draft of a message in the chat; may be null */
+        /** A draft of a message in the chat; may be null if none */
         draft_message?: draftMessage;
         /** Application-specific data associated with the chat. (For example, the chat scroll position or local chat notification settings can be stored here.) Persistent if the message database is used */
         client_data: string;
@@ -3014,7 +3014,7 @@ namespace TdApi {
     }
     
     
-    /** The chat is a private or secret chat, which can be reported using the method reportChat, or the other user can be blocked using the method toggleMessageSenderIsBlocked, -or the other user can be added to the contact list using the method addContact. If the chat is a private chat with a user with an emoji status, then a notice about emoji status usage must be shown */
+    /** The chat is a private or secret chat, which can be reported using the method reportChat, or the other user can be blocked using the method setMessageSenderBlockList, -or the other user can be added to the contact list using the method addContact. If the chat is a private chat with a user with an emoji status, then a notice about emoji status usage must be shown */
     export interface chatActionBarReportAddBlock {
         '@type': 'chatActionBarReportAddBlock';
         /** If true, the chat was automatically archived and can be moved back to the main chat list using addChatToList simultaneously with setting chat notification settings to default using setChatNotificationSettings */
@@ -3323,7 +3323,7 @@ namespace TdApi {
         unread_message_count: int32;
         /** The messages from which the thread starts. The messages are returned in a reverse chronological order (i.e., in order of decreasing message_id) */
         messages: vector<message>;
-        /** A draft of a message in the message thread; may be null */
+        /** A draft of a message in the message thread; may be null if none */
         draft_message?: draftMessage;
     }
     
@@ -3383,7 +3383,7 @@ namespace TdApi {
         unread_reaction_count: int32;
         /** Notification settings for the topic */
         notification_settings: chatNotificationSettings;
-        /** A draft of a message in the topic; may be null */
+        /** A draft of a message in the topic; may be null if none */
         draft_message?: draftMessage;
     }
     
@@ -8340,6 +8340,24 @@ namespace TdApi {
     }
     
     
+    /** The maximum number of stories sent per week */
+    export interface premiumLimitTypeWeeklySentStoryCount {
+        '@type': 'premiumLimitTypeWeeklySentStoryCount';
+    }
+    
+    
+    /** The maximum number of stories sent per month */
+    export interface premiumLimitTypeMonthlySentStoryCount {
+        '@type': 'premiumLimitTypeMonthlySentStoryCount';
+    }
+    
+    
+    /** The maximum length of captions of sent stories */
+    export interface premiumLimitTypeStoryCaptionLength {
+        '@type': 'premiumLimitTypeStoryCaptionLength';
+    }
+    
+    
     /** Increased limits */
     export interface premiumFeatureIncreasedLimits {
         '@type': 'premiumFeatureIncreasedLimits';
@@ -8400,7 +8418,7 @@ namespace TdApi {
     }
     
     
-    /** A emoji status shown along with the user's name */
+    /** An emoji status shown along with the user's name */
     export interface premiumFeatureEmojiStatus {
         '@type': 'premiumFeatureEmojiStatus';
     }
@@ -8427,6 +8445,48 @@ namespace TdApi {
     /** Allowed to translate chat messages real-time */
     export interface premiumFeatureRealTimeChatTranslation {
         '@type': 'premiumFeatureRealTimeChatTranslation';
+    }
+    
+    
+    /** Allowed to use many additional features for stories */
+    export interface premiumFeatureUpgradedStories {
+        '@type': 'premiumFeatureUpgradedStories';
+    }
+    
+    
+    /** User stories are displayed before stories of non-premium contacts */
+    export interface premiumStoryFeaturePriorityOrder {
+        '@type': 'premiumStoryFeaturePriorityOrder';
+    }
+    
+    
+    /** The ability to hide the fact that the user viewed other's stories */
+    export interface premiumStoryFeatureStealthMode {
+        '@type': 'premiumStoryFeatureStealthMode';
+    }
+    
+    
+    /** The ability to check who opened the current user's stories after they expire */
+    export interface premiumStoryFeaturePermanentViewsHistory {
+        '@type': 'premiumStoryFeaturePermanentViewsHistory';
+    }
+    
+    
+    /** The ability to set custom expiration duration for stories */
+    export interface premiumStoryFeatureCustomExpirationDuration {
+        '@type': 'premiumStoryFeatureCustomExpirationDuration';
+    }
+    
+    
+    /** The ability to save other's unprotected stories */
+    export interface premiumStoryFeatureSaveStories {
+        '@type': 'premiumStoryFeatureSaveStories';
+    }
+    
+    
+    /** The ability to use links and formatting in story caption */
+    export interface premiumStoryFeatureLinksAndFormatting {
+        '@type': 'premiumStoryFeatureLinksAndFormatting';
     }
     
     
@@ -8467,6 +8527,14 @@ namespace TdApi {
         '@type': 'premiumSourceFeature';
         /** The used feature */
         feature: PremiumFeature;
+    }
+    
+    
+    /** A user tried to use a Premium story feature */
+    export interface premiumSourceStoryFeature {
+        '@type': 'premiumSourceStoryFeature';
+        /** The used feature */
+        feature: PremiumStoryFeature;
     }
     
     
@@ -8763,6 +8831,40 @@ namespace TdApi {
         '@type': 'hashtags';
         /** A list of hashtags */
         hashtags: vector<string>;
+    }
+    
+    
+    /** A story can be sent */
+    export interface canSendStoryResultOk {
+        '@type': 'canSendStoryResultOk';
+    }
+    
+    
+    /** The user must subscribe to Telegram Premium to be able to post stories */
+    export interface canSendStoryResultPremiumNeeded {
+        '@type': 'canSendStoryResultPremiumNeeded';
+    }
+    
+    
+    /** The limit for the number of active stories exceeded. The user can buy Telegram Premium, delete an active story, or wait for the oldest story to expire */
+    export interface canSendStoryResultActiveStoryLimitExceeded {
+        '@type': 'canSendStoryResultActiveStoryLimitExceeded';
+    }
+    
+    
+    /** The weekly limit for the number of posted stories exceeded. The user needs to buy Telegram Premium or wait specified time */
+    export interface canSendStoryResultWeeklyLimitExceeded {
+        '@type': 'canSendStoryResultWeeklyLimitExceeded';
+        /** Time left before the user can send the next story */
+        retry_after: int32;
+    }
+    
+    
+    /** The monthly limit for the number of posted stories exceeded. The user needs to buy Telegram Premium or wait specified time */
+    export interface canSendStoryResultMonthlyLimitExceeded {
+        '@type': 'canSendStoryResultMonthlyLimitExceeded';
+        /** Time left before the user can send the next story */
+        retry_after: int32;
     }
     
     
@@ -9405,13 +9507,15 @@ namespace TdApi {
     /** The story can be viewed by everyone */
     export interface storyPrivacySettingsEveryone {
         '@type': 'storyPrivacySettingsEveryone';
+        /** Identifiers of the users that can't see the story; always unknown and empty for non-owned stories */
+        except_user_ids: vector<int53>;
     }
     
     
     /** The story can be viewed by all contacts except chosen users */
     export interface storyPrivacySettingsContacts {
         '@type': 'storyPrivacySettingsContacts';
-        /** User identifiers of the contacts that can't see the story; always empty for non-owned stories */
+        /** User identifiers of the contacts that can't see the story; always unknown and empty for non-owned stories */
         except_user_ids: vector<int53>;
     }
     
@@ -9425,7 +9529,7 @@ namespace TdApi {
     /** The story can be viewed by certain specified users */
     export interface storyPrivacySettingsSelectedContacts {
         '@type': 'storyPrivacySettingsSelectedContacts';
-        /** Identifiers of the users; always empty for non-owned stories */
+        /** Identifiers of the users; always unknown and empty for non-owned stories */
         user_ids: vector<int53>;
     }
     
@@ -10206,6 +10310,120 @@ namespace TdApi {
     }
     
     
+    /** Represents a viewer of a story */
+    export interface storyViewer {
+        '@type': 'storyViewer';
+        /** User identifier of the viewer */
+        user_id: int53;
+        /** Approximate point in time (Unix timestamp) when the story was viewed */
+        view_date: int32;
+        /** Block list to which the user is added; may be null if none */
+        block_list?: BlockList;
+        /** Type of the reaction that was chosen by the user; may be null if none */
+        chosen_reaction_type?: ReactionType;
+    }
+    
+    
+    /** Represents a list of story viewers */
+    export interface storyViewers {
+        '@type': 'storyViewers';
+        /** Approximate total number of story viewers found */
+        total_count: int32;
+        /** List of story viewers */
+        viewers: vector<storyViewer>;
+        /** The offset for the next request. If empty, there are no more results */
+        next_offset: string;
+    }
+    
+    
+    /** Describes position of a clickable rectangle area on a story media */
+    export interface storyAreaPosition {
+        '@type': 'storyAreaPosition';
+        /** The abscissa of the rectangle's center, as a percentage of the media width */
+        x_percentage: double;
+        /** The ordinate of the rectangle's center, as a percentage of the media height */
+        y_percentage: double;
+        /** The width of the rectangle, as a percentage of the media width */
+        width_percentage: double;
+        /** The ordinate of the rectangle's center, as a percentage of the media height */
+        height_percentage: double;
+        /** Clockwise rotation angle of the rectangle, in degrees; 0-360 */
+        rotation_angle: double;
+    }
+    
+    
+    /** An area pointing to a location */
+    export interface storyAreaTypeLocation {
+        '@type': 'storyAreaTypeLocation';
+        /** The location */
+        location: location;
+    }
+    
+    
+    /** An area pointing to a venue */
+    export interface storyAreaTypeVenue {
+        '@type': 'storyAreaTypeVenue';
+        /** Information about the venue */
+        venue: venue;
+    }
+    
+    
+    /** Describes a clickable rectangle area on a story media */
+    export interface storyArea {
+        '@type': 'storyArea';
+        /** Position of the area */
+        position: storyAreaPosition;
+        /** Type of the area */
+        type: StoryAreaType;
+    }
+    
+    
+    /** An area pointing to a location */
+    export interface inputStoryAreaTypeLocation {
+        '@type': 'inputStoryAreaTypeLocation';
+        /** The location */
+        location: location;
+    }
+    
+    
+    /** An area pointing to a venue found by the bot getOption("venue_search_bot_username") */
+    export interface inputStoryAreaTypeFoundVenue {
+        '@type': 'inputStoryAreaTypeFoundVenue';
+        /** Identifier of the inline query, used to found the venue */
+        query_id: int64;
+        /** Identifier of the inline query result */
+        result_id: string;
+    }
+    
+    
+    /** An area pointing to a venue already added to the story */
+    export interface inputStoryAreaTypePreviousVenue {
+        '@type': 'inputStoryAreaTypePreviousVenue';
+        /** Provider of the venue */
+        venue_provider: string;
+        /** Identifier of the venue in the provider database */
+        venue_id: string;
+    }
+    
+    
+    /** Describes a clickable rectangle area on a story media to be added */
+    export interface inputStoryArea {
+        '@type': 'inputStoryArea';
+        /** Position of the area */
+        position: storyAreaPosition;
+        /** Type of the area */
+        type: InputStoryAreaType;
+    }
+    
+    
+    /** Contains a list of story areas to be added */
+    export interface inputStoryAreas {
+        '@type': 'inputStoryAreas';
+        /** List of 0-10 input story areas */
+        areas: vector<inputStoryArea>;
+    }
+    
+    
     /** Describes a video file sent in a story */
     export interface storyVideo {
         '@type': 'storyVideo';
@@ -10257,7 +10475,7 @@ namespace TdApi {
     /** A photo story */
     export interface inputStoryContentPhoto {
         '@type': 'inputStoryContentPhoto';
-        /** Photo to send. The photo must be at most 10 MB in size. The photo size must be 720x1280 */
+        /** Photo to send. The photo must be at most 10 MB in size. The photo size must be 1080x1920 */
         photo: InputFile;
         /** File identifiers of the stickers added to the photo, if applicable */
         added_sticker_file_ids: vector<int32>;
@@ -10295,6 +10513,8 @@ namespace TdApi {
         '@type': 'storyInteractionInfo';
         /** Number of times the story was viewed */
         view_count: int32;
+        /** Number of reactions added to the story */
+        reaction_count: int32;
         /** Identifiers of at most 3 recent viewers of the story */
         recent_viewer_user_ids: vector<int53>;
     }
@@ -10309,6 +10529,8 @@ namespace TdApi {
         sender_chat_id: int53;
         /** Point in time (Unix timestamp) when the story was published */
         date: int32;
+        /** True, if the story is being sent by the current user */
+        is_being_sent: Bool;
         /** True, if the story is being edited by the current user */
         is_being_edited: Bool;
         /** True, if the story was edited */
@@ -10327,10 +10549,14 @@ namespace TdApi {
         has_expired_viewers: Bool;
         /** Information about interactions with the story; may be null if the story isn't owned or there were no interactions */
         interaction_info?: storyInteractionInfo;
+        /** Type of the chosen reaction; may be null if none */
+        chosen_reaction_type?: ReactionType;
         /** Privacy rules affecting story visibility; may be approximate for non-owned stories */
         privacy_settings: StoryPrivacySettings;
         /** Content of the story */
         content: StoryContent;
+        /** Clickable areas to be shown on the story content */
+        areas: vector<storyArea>;
         /** Caption of the story */
         caption: formattedText;
     }
@@ -10371,6 +10597,18 @@ namespace TdApi {
         max_read_story_id: int32;
         /** Basic information about the stories; use getStory to get full information about the stories. The stories are in a chronological order (i.e., in order of increasing story identifiers) */
         stories: vector<storyInfo>;
+    }
+    
+    
+    /** The main block list that disallows writing messages to the current user, receiving their status and photo, viewing of stories, and some other actions */
+    export interface blockListMain {
+        '@type': 'blockListMain';
+    }
+    
+    
+    /** The block list that disallows viewing of stories of the current user */
+    export interface blockListStories {
+        '@type': 'blockListStories';
     }
     
     
@@ -11689,12 +11927,12 @@ namespace TdApi {
     
     
     /** A chat was blocked or unblocked */
-    export interface updateChatIsBlocked {
-        '@type': 'updateChatIsBlocked';
+    export interface updateChatBlockList {
+        '@type': 'updateChatBlockList';
         /** Chat identifier */
         chat_id: int53;
-        /** New value of is_blocked */
-        is_blocked: Bool;
+        /** Block list to which the chat is added; may be null if none */
+        block_list?: BlockList;
     }
     
     
@@ -12078,6 +12316,30 @@ namespace TdApi {
     }
     
     
+    /** A story has been successfully sent */
+    export interface updateStorySendSucceeded {
+        '@type': 'updateStorySendSucceeded';
+        /** The sent story */
+        story: story;
+        /** The previous temporary story identifier */
+        old_story_id: int32;
+    }
+    
+    
+    /** A story failed to send. If the story sending is canceled, then updateStoryDeleted will be received instead of this update */
+    export interface updateStorySendFailed {
+        '@type': 'updateStorySendFailed';
+        /** The failed to send story */
+        story: story;
+        /** The cause of the failure; may be null if unknown */
+        error?: CanSendStoryResult;
+        /** An error code */
+        error_code: int32;
+        /** Error message */
+        error_message: string;
+    }
+    
+    
     /** The list of active stories posted by a specific chat has changed */
     export interface updateChatActiveStories {
         '@type': 'updateChatActiveStories';
@@ -12093,6 +12355,16 @@ namespace TdApi {
         story_list: StoryList;
         /** Approximate total number of chats with active stories in the list */
         chat_count: int32;
+    }
+    
+    
+    /** Story stealth mode settings have changed */
+    export interface updateStoryStealthMode {
+        '@type': 'updateStoryStealthMode';
+        /** Point in time (Unix timestamp) until stealth mode is active; 0 if it is disabled */
+        active_until_date: int32;
+        /** Point in time (Unix timestamp) when stealth mode can be enabled again; 0 if there is no active cooldown */
+        cooldown_until_date: int32;
     }
     
     
@@ -12914,11 +13186,12 @@ namespace TdApi {
     export type LanguagePackStrings = languagePackStrings;
     export type LanguagePackInfo = languagePackInfo;
     export type LocalizationTargetInfo = localizationTargetInfo;
-    export type PremiumLimitType = premiumLimitTypeSupergroupCount | premiumLimitTypePinnedChatCount | premiumLimitTypeCreatedPublicChatCount | premiumLimitTypeSavedAnimationCount | premiumLimitTypeFavoriteStickerCount | premiumLimitTypeChatFolderCount | premiumLimitTypeChatFolderChosenChatCount | premiumLimitTypePinnedArchivedChatCount | premiumLimitTypeCaptionLength | premiumLimitTypeBioLength | premiumLimitTypeChatFolderInviteLinkCount | premiumLimitTypeShareableChatFolderCount | premiumLimitTypeActiveStoryCount;
-    export type PremiumFeature = premiumFeatureIncreasedLimits | premiumFeatureIncreasedUploadFileSize | premiumFeatureImprovedDownloadSpeed | premiumFeatureVoiceRecognition | premiumFeatureDisabledAds | premiumFeatureUniqueReactions | premiumFeatureUniqueStickers | premiumFeatureCustomEmoji | premiumFeatureAdvancedChatManagement | premiumFeatureProfileBadge | premiumFeatureEmojiStatus | premiumFeatureAnimatedProfilePhoto | premiumFeatureForumTopicIcon | premiumFeatureAppIcons | premiumFeatureRealTimeChatTranslation;
+    export type PremiumLimitType = premiumLimitTypeSupergroupCount | premiumLimitTypePinnedChatCount | premiumLimitTypeCreatedPublicChatCount | premiumLimitTypeSavedAnimationCount | premiumLimitTypeFavoriteStickerCount | premiumLimitTypeChatFolderCount | premiumLimitTypeChatFolderChosenChatCount | premiumLimitTypePinnedArchivedChatCount | premiumLimitTypeCaptionLength | premiumLimitTypeBioLength | premiumLimitTypeChatFolderInviteLinkCount | premiumLimitTypeShareableChatFolderCount | premiumLimitTypeActiveStoryCount | premiumLimitTypeWeeklySentStoryCount | premiumLimitTypeMonthlySentStoryCount | premiumLimitTypeStoryCaptionLength;
+    export type PremiumFeature = premiumFeatureIncreasedLimits | premiumFeatureIncreasedUploadFileSize | premiumFeatureImprovedDownloadSpeed | premiumFeatureVoiceRecognition | premiumFeatureDisabledAds | premiumFeatureUniqueReactions | premiumFeatureUniqueStickers | premiumFeatureCustomEmoji | premiumFeatureAdvancedChatManagement | premiumFeatureProfileBadge | premiumFeatureEmojiStatus | premiumFeatureAnimatedProfilePhoto | premiumFeatureForumTopicIcon | premiumFeatureAppIcons | premiumFeatureRealTimeChatTranslation | premiumFeatureUpgradedStories;
+    export type PremiumStoryFeature = premiumStoryFeaturePriorityOrder | premiumStoryFeatureStealthMode | premiumStoryFeaturePermanentViewsHistory | premiumStoryFeatureCustomExpirationDuration | premiumStoryFeatureSaveStories | premiumStoryFeatureLinksAndFormatting;
     export type PremiumLimit = premiumLimit;
     export type PremiumFeatures = premiumFeatures;
-    export type PremiumSource = premiumSourceLimitExceeded | premiumSourceFeature | premiumSourceLink | premiumSourceSettings;
+    export type PremiumSource = premiumSourceLimitExceeded | premiumSourceFeature | premiumSourceStoryFeature | premiumSourceLink | premiumSourceSettings;
     export type PremiumFeaturePromotionAnimation = premiumFeaturePromotionAnimation;
     export type PremiumState = premiumState;
     export type StorePaymentPurpose = storePaymentPurposePremiumSubscription | storePaymentPurposeGiftedPremium;
@@ -12930,6 +13203,7 @@ namespace TdApi {
     export type ThemeSettings = themeSettings;
     export type ChatTheme = chatTheme;
     export type Hashtags = hashtags;
+    export type CanSendStoryResult = canSendStoryResultOk | canSendStoryResultPremiumNeeded | canSendStoryResultActiveStoryLimitExceeded | canSendStoryResultWeeklyLimitExceeded | canSendStoryResultMonthlyLimitExceeded;
     export type CanTransferOwnershipResult = canTransferOwnershipResultOk | canTransferOwnershipResultPasswordNeeded | canTransferOwnershipResultPasswordTooFresh | canTransferOwnershipResultSessionTooFresh;
     export type CheckChatUsernameResult = checkChatUsernameResultOk | checkChatUsernameResultUsernameInvalid | checkChatUsernameResultUsernameOccupied | checkChatUsernameResultUsernamePurchasable | checkChatUsernameResultPublicChatsTooMany | checkChatUsernameResultPublicGroupsUnavailable;
     export type CheckStickerSetNameResult = checkStickerSetNameResultOk | checkStickerSetNameResultNameInvalid | checkStickerSetNameResultNameOccupied;
@@ -12961,6 +13235,14 @@ namespace TdApi {
     export type InternalLinkType = internalLinkTypeActiveSessions | internalLinkTypeAttachmentMenuBot | internalLinkTypeAuthenticationCode | internalLinkTypeBackground | internalLinkTypeBotAddToChannel | internalLinkTypeBotStart | internalLinkTypeBotStartInGroup | internalLinkTypeChangePhoneNumber | internalLinkTypeChatFolderInvite | internalLinkTypeChatFolderSettings | internalLinkTypeChatInvite | internalLinkTypeDefaultMessageAutoDeleteTimerSettings | internalLinkTypeEditProfileSettings | internalLinkTypeGame | internalLinkTypeInstantView | internalLinkTypeInvoice | internalLinkTypeLanguagePack | internalLinkTypeLanguageSettings | internalLinkTypeMessage | internalLinkTypeMessageDraft | internalLinkTypePassportDataRequest | internalLinkTypePhoneNumberConfirmation | internalLinkTypePremiumFeatures | internalLinkTypePrivacyAndSecuritySettings | internalLinkTypeProxy | internalLinkTypePublicChat | internalLinkTypeQrCodeAuthentication | internalLinkTypeRestorePurchases | internalLinkTypeSettings | internalLinkTypeStickerSet | internalLinkTypeStory | internalLinkTypeTheme | internalLinkTypeThemeSettings | internalLinkTypeUnknownDeepLink | internalLinkTypeUnsupportedProxy | internalLinkTypeUserPhoneNumber | internalLinkTypeUserToken | internalLinkTypeVideoChat | internalLinkTypeWebApp;
     export type MessageLink = messageLink;
     export type MessageLinkInfo = messageLinkInfo;
+    export type StoryViewer = storyViewer;
+    export type StoryViewers = storyViewers;
+    export type StoryAreaPosition = storyAreaPosition;
+    export type StoryAreaType = storyAreaTypeLocation | storyAreaTypeVenue;
+    export type StoryArea = storyArea;
+    export type InputStoryAreaType = inputStoryAreaTypeLocation | inputStoryAreaTypeFoundVenue | inputStoryAreaTypePreviousVenue;
+    export type InputStoryArea = inputStoryArea;
+    export type InputStoryAreas = inputStoryAreas;
     export type StoryVideo = storyVideo;
     export type StoryContent = storyContentPhoto | storyContentVideo | storyContentUnsupported;
     export type InputStoryContent = inputStoryContentPhoto | inputStoryContentVideo;
@@ -12970,6 +13252,7 @@ namespace TdApi {
     export type Stories = stories;
     export type StoryInfo = storyInfo;
     export type ChatActiveStories = chatActiveStories;
+    export type BlockList = blockListMain | blockListStories;
     export type FilePart = filePart;
     export type FileType = fileTypeNone | fileTypeAnimation | fileTypeAudio | fileTypeDocument | fileTypeNotificationSound | fileTypePhoto | fileTypePhotoStory | fileTypeProfilePhoto | fileTypeSecret | fileTypeSecretThumbnail | fileTypeSecure | fileTypeSticker | fileTypeThumbnail | fileTypeUnknown | fileTypeVideo | fileTypeVideoNote | fileTypeVideoStory | fileTypeVoiceNote | fileTypeWallpaper;
     export type StorageStatisticsByFileType = storageStatisticsByFileType;
@@ -13014,7 +13297,7 @@ namespace TdApi {
     export type Point = point;
     export type VectorPathCommand = vectorPathCommandLine | vectorPathCommandCubicBezierCurve;
     export type BotCommandScope = botCommandScopeDefault | botCommandScopeAllPrivateChats | botCommandScopeAllGroupChats | botCommandScopeAllChatAdministrators | botCommandScopeChat | botCommandScopeChatAdministrators | botCommandScopeChatMember;
-    export type Update = updateAuthorizationState | updateNewMessage | updateMessageSendAcknowledged | updateMessageSendSucceeded | updateMessageSendFailed | updateMessageContent | updateMessageEdited | updateMessageIsPinned | updateMessageInteractionInfo | updateMessageContentOpened | updateMessageMentionRead | updateMessageUnreadReactions | updateMessageLiveLocationViewed | updateNewChat | updateChatTitle | updateChatPhoto | updateChatPermissions | updateChatLastMessage | updateChatPosition | updateChatReadInbox | updateChatReadOutbox | updateChatActionBar | updateChatAvailableReactions | updateChatDraftMessage | updateChatMessageSender | updateChatMessageAutoDeleteTime | updateChatNotificationSettings | updateChatPendingJoinRequests | updateChatReplyMarkup | updateChatBackground | updateChatTheme | updateChatUnreadMentionCount | updateChatUnreadReactionCount | updateChatVideoChat | updateChatDefaultDisableNotification | updateChatHasProtectedContent | updateChatIsTranslatable | updateChatIsMarkedAsUnread | updateChatIsBlocked | updateChatHasScheduledMessages | updateChatFolders | updateChatOnlineMemberCount | updateForumTopicInfo | updateScopeNotificationSettings | updateNotification | updateNotificationGroup | updateActiveNotifications | updateHavePendingNotifications | updateDeleteMessages | updateChatAction | updateUserStatus | updateUser | updateBasicGroup | updateSupergroup | updateSecretChat | updateUserFullInfo | updateBasicGroupFullInfo | updateSupergroupFullInfo | updateServiceNotification | updateFile | updateFileGenerationStart | updateFileGenerationStop | updateFileDownloads | updateFileAddedToDownloads | updateFileDownload | updateFileRemovedFromDownloads | updateCall | updateGroupCall | updateGroupCallParticipant | updateNewCallSignalingData | updateUserPrivacySettingRules | updateUnreadMessageCount | updateUnreadChatCount | updateStory | updateStoryDeleted | updateChatActiveStories | updateStoryListChatCount | updateOption | updateStickerSet | updateInstalledStickerSets | updateTrendingStickerSets | updateRecentStickers | updateFavoriteStickers | updateSavedAnimations | updateSavedNotificationSounds | updateSelectedBackground | updateChatThemes | updateLanguagePackStrings | updateConnectionState | updateTermsOfService | updateUsersNearby | updateAttachmentMenuBots | updateWebAppMessageSent | updateActiveEmojiReactions | updateDefaultReactionType | updateDiceEmojis | updateAnimatedEmojiMessageClicked | updateAnimationSearchParameters | updateSuggestedActions | updateAddChatMembersPrivacyForbidden | updateAutosaveSettings | updateNewInlineQuery | updateNewChosenInlineResult | updateNewCallbackQuery | updateNewInlineCallbackQuery | updateNewShippingQuery | updateNewPreCheckoutQuery | updateNewCustomEvent | updateNewCustomQuery | updatePoll | updatePollAnswer | updateChatMember | updateNewChatJoinRequest | updateFatalError;
+    export type Update = updateAuthorizationState | updateNewMessage | updateMessageSendAcknowledged | updateMessageSendSucceeded | updateMessageSendFailed | updateMessageContent | updateMessageEdited | updateMessageIsPinned | updateMessageInteractionInfo | updateMessageContentOpened | updateMessageMentionRead | updateMessageUnreadReactions | updateMessageLiveLocationViewed | updateNewChat | updateChatTitle | updateChatPhoto | updateChatPermissions | updateChatLastMessage | updateChatPosition | updateChatReadInbox | updateChatReadOutbox | updateChatActionBar | updateChatAvailableReactions | updateChatDraftMessage | updateChatMessageSender | updateChatMessageAutoDeleteTime | updateChatNotificationSettings | updateChatPendingJoinRequests | updateChatReplyMarkup | updateChatBackground | updateChatTheme | updateChatUnreadMentionCount | updateChatUnreadReactionCount | updateChatVideoChat | updateChatDefaultDisableNotification | updateChatHasProtectedContent | updateChatIsTranslatable | updateChatIsMarkedAsUnread | updateChatBlockList | updateChatHasScheduledMessages | updateChatFolders | updateChatOnlineMemberCount | updateForumTopicInfo | updateScopeNotificationSettings | updateNotification | updateNotificationGroup | updateActiveNotifications | updateHavePendingNotifications | updateDeleteMessages | updateChatAction | updateUserStatus | updateUser | updateBasicGroup | updateSupergroup | updateSecretChat | updateUserFullInfo | updateBasicGroupFullInfo | updateSupergroupFullInfo | updateServiceNotification | updateFile | updateFileGenerationStart | updateFileGenerationStop | updateFileDownloads | updateFileAddedToDownloads | updateFileDownload | updateFileRemovedFromDownloads | updateCall | updateGroupCall | updateGroupCallParticipant | updateNewCallSignalingData | updateUserPrivacySettingRules | updateUnreadMessageCount | updateUnreadChatCount | updateStory | updateStoryDeleted | updateStorySendSucceeded | updateStorySendFailed | updateChatActiveStories | updateStoryListChatCount | updateStoryStealthMode | updateOption | updateStickerSet | updateInstalledStickerSets | updateTrendingStickerSets | updateRecentStickers | updateFavoriteStickers | updateSavedAnimations | updateSavedNotificationSounds | updateSelectedBackground | updateChatThemes | updateLanguagePackStrings | updateConnectionState | updateTermsOfService | updateUsersNearby | updateAttachmentMenuBots | updateWebAppMessageSent | updateActiveEmojiReactions | updateDefaultReactionType | updateDiceEmojis | updateAnimatedEmojiMessageClicked | updateAnimationSearchParameters | updateSuggestedActions | updateAddChatMembersPrivacyForbidden | updateAutosaveSettings | updateNewInlineQuery | updateNewChosenInlineResult | updateNewCallbackQuery | updateNewInlineCallbackQuery | updateNewShippingQuery | updateNewPreCheckoutQuery | updateNewCustomEvent | updateNewCustomQuery | updatePoll | updatePollAnswer | updateChatMember | updateNewChatJoinRequest | updateFatalError;
     export type Updates = updates;
     export type LogStream = logStreamDefault | logStreamFile | logStreamEmpty;
     export type LogVerbosityLevel = logVerbosityLevel;
@@ -13028,7 +13311,7 @@ namespace TdApi {
     export type TestVectorString = testVectorString;
     export type TestVectorStringObject = testVectorStringObject;
 
-    export type TdClass = Error | Ok | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | EmailAddressAuthentication | EmailAddressResetState | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerFormat | StickerType | StickerFullType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | WebApp | Poll | Background | Backgrounds | ChatBackground | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | ChatPhotoStickerType | ChatPhotoSticker | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | PremiumPaymentOption | PremiumStatePaymentOption | EmojiStatus | EmojiStatuses | Usernames | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | ChatMessageSender | ChatMessageSenders | MessageViewer | MessageViewers | MessageForwardOrigin | ReactionType | MessageForwardInfo | MessageReplyInfo | MessageReaction | MessageInteractionInfo | UnreadReaction | MessageSendingState | MessageReplyTo | Message | Messages | FoundMessages | FoundChatMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | MessageSource | MessageSponsorType | MessageSponsor | SponsoredMessage | SponsoredMessages | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | DraftMessage | ChatType | ChatFolderIcon | ChatFolder | ChatFolderInfo | ChatFolderInviteLink | ChatFolderInviteLinks | ChatFolderInviteLinkInfo | RecommendedChatFolder | RecommendedChatFolders | ArchiveChatListSettings | ChatList | ChatLists | ChatSource | ChatPosition | ChatAvailableReactions | VideoChat | Chat | Chats | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | FoundWebApp | WebAppInfo | MessageThreadInfo | ForumTopicIcon | ForumTopicInfo | ForumTopic | ForumTopics | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | BankCardActionOpenUrl | BankCardInfo | Address | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentOption | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceipt | InputInvoice | MessageExtendedMedia | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | EmojiCategory | EmojiCategories | EmojiCategoryType | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | FirebaseAuthenticationSettings | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | EmojiReaction | Animations | DiceStickers | ImportedContacts | SpeechRecognitionResult | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | HttpUrl | UserLink | InputInlineQueryResult | InlineQueryResult | InlineQueryResultsButtonType | InlineQueryResultsButton | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | PremiumLimit | PremiumFeatures | PremiumSource | PremiumFeaturePromotionAnimation | PremiumState | StorePaymentPurpose | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | InputBackground | ThemeSettings | ChatTheme | Hashtags | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | StoryPrivacySettings | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | AccountTtl | MessageAutoDeleteTime | SessionType | Session | Sessions | ConnectedWebsite | ConnectedWebsites | ReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | StoryVideo | StoryContent | InputStoryContent | StoryList | StoryInteractionInfo | Story | Stories | StoryInfo | ChatActiveStories | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | AutosaveSettingsScope | ScopeAutosaveSettings | AutosaveSettingsException | AutosaveSettings | ConnectionState | TopChatCategory | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsMessageInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | MessageStatistics | Point | VectorPathCommand | BotCommandScope | Update | Updates | LogStream | LogVerbosityLevel | LogTags | UserSupportInfo | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
+    export type TdClass = Error | Ok | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | EmailAddressAuthentication | EmailAddressResetState | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerFormat | StickerType | StickerFullType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | WebApp | Poll | Background | Backgrounds | ChatBackground | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | ChatPhotoStickerType | ChatPhotoSticker | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | PremiumPaymentOption | PremiumStatePaymentOption | EmojiStatus | EmojiStatuses | Usernames | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | ChatMessageSender | ChatMessageSenders | MessageViewer | MessageViewers | MessageForwardOrigin | ReactionType | MessageForwardInfo | MessageReplyInfo | MessageReaction | MessageInteractionInfo | UnreadReaction | MessageSendingState | MessageReplyTo | Message | Messages | FoundMessages | FoundChatMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | MessageSource | MessageSponsorType | MessageSponsor | SponsoredMessage | SponsoredMessages | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | DraftMessage | ChatType | ChatFolderIcon | ChatFolder | ChatFolderInfo | ChatFolderInviteLink | ChatFolderInviteLinks | ChatFolderInviteLinkInfo | RecommendedChatFolder | RecommendedChatFolders | ArchiveChatListSettings | ChatList | ChatLists | ChatSource | ChatPosition | ChatAvailableReactions | VideoChat | Chat | Chats | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | FoundWebApp | WebAppInfo | MessageThreadInfo | ForumTopicIcon | ForumTopicInfo | ForumTopic | ForumTopics | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | BankCardActionOpenUrl | BankCardInfo | Address | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentOption | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceipt | InputInvoice | MessageExtendedMedia | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | EmojiCategory | EmojiCategories | EmojiCategoryType | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | FirebaseAuthenticationSettings | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | EmojiReaction | Animations | DiceStickers | ImportedContacts | SpeechRecognitionResult | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | HttpUrl | UserLink | InputInlineQueryResult | InlineQueryResult | InlineQueryResultsButtonType | InlineQueryResultsButton | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | PremiumStoryFeature | PremiumLimit | PremiumFeatures | PremiumSource | PremiumFeaturePromotionAnimation | PremiumState | StorePaymentPurpose | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | InputBackground | ThemeSettings | ChatTheme | Hashtags | CanSendStoryResult | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | StoryPrivacySettings | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | AccountTtl | MessageAutoDeleteTime | SessionType | Session | Sessions | ConnectedWebsite | ConnectedWebsites | ReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | StoryViewer | StoryViewers | StoryAreaPosition | StoryAreaType | StoryArea | InputStoryAreaType | InputStoryArea | InputStoryAreas | StoryVideo | StoryContent | InputStoryContent | StoryList | StoryInteractionInfo | Story | Stories | StoryInfo | ChatActiveStories | BlockList | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | AutosaveSettingsScope | ScopeAutosaveSettings | AutosaveSettingsException | AutosaveSettings | ConnectionState | TopChatCategory | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsMessageInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | MessageStatistics | Point | VectorPathCommand | BotCommandScope | Update | Updates | LogStream | LogVerbosityLevel | LogTags | UserSupportInfo | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
     
     
     /** Returns the current authorization state; this is an offline request. For informational purposes only. Use updateAuthorizationState instead to maintain the current authorization state. Can be called before initialization */
@@ -14138,7 +14421,7 @@ namespace TdApi {
         options?: messageSendOptions;
         /** Identifier of the inline query */
         query_id?: int64;
-        /** Identifier of the inline result */
+        /** Identifier of the inline query result */
         result_id?: string;
         /** Pass true to hide the bot, via which the message is sent. Can be used only for bots getOption("animation_search_bot_username"), getOption("photo_search_bot_username"), and getOption("venue_search_bot_username") */
         hide_via_bot?: Bool;
@@ -14810,7 +15093,7 @@ namespace TdApi {
         user_location?: location;
         /** Text of the query */
         query?: string;
-        /** Offset of the first entry to return */
+        /** Offset of the first entry to return; use empty string to get the first chunk of results */
         offset?: string;
     }
     
@@ -15915,16 +16198,24 @@ namespace TdApi {
     }
     
     
-    /** Sends a new story. Returns a temporary story with identifier 0 */
+    /** Checks whether the current user can send a story */
+    export interface canSendStory {
+        '@type': 'canSendStory';
+    }
+    
+    
+    /** Sends a new story. Returns a temporary story */
     export interface sendStory {
         '@type': 'sendStory';
         /** Content of the story */
         content?: InputStoryContent;
+        /** Clickable rectangle areas to be shown on the story media; pass null if none */
+        areas?: inputStoryAreas;
         /** Story caption; pass null to use an empty caption; 0-getOption("story_caption_length_max") characters */
         caption?: formattedText;
         /** The privacy settings for the story */
         privacy_settings?: StoryPrivacySettings;
-        /** Period after which the story is moved to archive, in seconds; must be one of 6 * 3600, 12 * 3600, 86400, 2 * 86400, 3 * 86400, or 7 * 86400 for Telegram Premium users, and 86400 otherwise */
+        /** Period after which the story is moved to archive, in seconds; must be one of 6 * 3600, 12 * 3600, 86400, or 2 * 86400 for Telegram Premium users, and 86400 otherwise */
         active_period?: int32;
         /** Pass true to keep the story accessible after expiration */
         is_pinned?: Bool;
@@ -15940,6 +16231,8 @@ namespace TdApi {
         story_id?: int32;
         /** New content of the story; pass null to keep the current content */
         content?: InputStoryContent;
+        /** New clickable rectangle areas to be shown on the story media; pass null to keep the current areas. Areas can't be edited if story content isn't changed */
+        areas?: inputStoryAreas;
         /** New story caption; pass null to keep the current caption */
         caption?: formattedText;
     }
@@ -16047,14 +16340,42 @@ namespace TdApi {
     }
     
     
-    /** Returns viewers of a recent outgoing story. The method can be called if story.can_get_viewers == true. The views are returned in a reverse chronological order (i.e., in order of decreasing view_date) -For optimal performance, the number of returned stories is chosen by TDLib */
+    /** Returns reactions, which can be chosen for a story */
+    export interface getStoryAvailableReactions {
+        '@type': 'getStoryAvailableReactions';
+        /** Number of reaction per row, 5-25 */
+        row_size?: int32;
+    }
+    
+    
+    /** Changes chosen reaction on a story */
+    export interface setStoryReaction {
+        '@type': 'setStoryReaction';
+        /** The identifier of the sender of the story */
+        story_sender_chat_id?: int53;
+        /** The identifier of the story */
+        story_id?: int32;
+        /** Type of the reaction to set; pass null to remove the reaction. `reactionTypeCustomEmoji` reactions can be used only by Telegram Premium users */
+        reaction_type?: ReactionType;
+        /** Pass true if the reaction needs to be added to recent reactions */
+        update_recent_reactions?: Bool;
+    }
+    
+    
+    /** Returns viewers of a story. The method can be called if story.can_get_viewers == true */
     export interface getStoryViewers {
         '@type': 'getStoryViewers';
         /** Story identifier */
         story_id?: int32;
-        /** A viewer from which to return next viewers; pass null to get results from the beginning */
-        offset_viewer?: messageViewer;
-        /** The maximum number of story viewers to return -For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+        /** Query to search for in names and usernames of the viewers; may be empty to get all relevant viewers */
+        query?: string;
+        /** Pass true to get only contacts; pass false to get all relevant viewers */
+        only_contacts?: Bool;
+        /** Pass true to get viewers with reaction first; pass false to get viewers sorted just by view_date */
+        prefer_with_reaction?: Bool;
+        /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of story viewers to return */
         limit?: int32;
     }
     
@@ -16070,6 +16391,12 @@ namespace TdApi {
         reason?: ReportReason;
         /** Additional report details; 0-1024 characters */
         text?: string;
+    }
+    
+    
+    /** Activates stealth mode for stories, which hides all views of stories from the current user in the last "story_stealth_mode_past_period" seconds -and for the next "story_stealth_mode_future_period" seconds; for Telegram Premium users only */
+    export interface activateStoryStealthMode {
+        '@type': 'activateStoryStealthMode';
     }
     
     
@@ -16897,13 +17224,13 @@ namespace TdApi {
     }
     
     
-    /** Changes the block state of a message sender. Currently, only users and supergroup chats can be blocked */
-    export interface toggleMessageSenderIsBlocked {
-        '@type': 'toggleMessageSenderIsBlocked';
+    /** Changes the block list of a message sender. Currently, only users and supergroup chats can be blocked */
+    export interface setMessageSenderBlockList {
+        '@type': 'setMessageSenderBlockList';
         /** Identifier of a message sender to block/unblock */
         sender_id?: MessageSender;
-        /** New value of is_blocked */
-        is_blocked?: Bool;
+        /** New block list for the message sender; pass null to unblock the message sender */
+        block_list?: BlockList;
     }
     
     
@@ -16924,6 +17251,8 @@ namespace TdApi {
     /** Returns users and chats that were blocked by the current user */
     export interface getBlockedMessageSenders {
         '@type': 'getBlockedMessageSenders';
+        /** Block list from which to return users */
+        block_list?: BlockList;
         /** Number of users and chats to skip in the result; must be non-negative */
         offset?: int32;
         /** The maximum number of users and chats to return; up to 100 */
@@ -17550,7 +17879,7 @@ namespace TdApi {
     /** Sets default administrator rights for adding the bot to basic group and supergroup chats; for bots only */
     export interface setDefaultGroupAdministratorRights {
         '@type': 'setDefaultGroupAdministratorRights';
-        /** Default administrator rights for adding the bot to basic group and supergroup chats; may be null */
+        /** Default administrator rights for adding the bot to basic group and supergroup chats; pass null to remove default rights */
         default_group_administrator_rights?: chatAdministratorRights;
     }
     
@@ -17558,7 +17887,7 @@ namespace TdApi {
     /** Sets default administrator rights for adding the bot to channel chats; for bots only */
     export interface setDefaultChannelAdministratorRights {
         '@type': 'setDefaultChannelAdministratorRights';
-        /** Default administrator rights for adding the bot to channels; may be null */
+        /** Default administrator rights for adding the bot to channels; pass null to remove default rights */
         default_channel_administrator_rights?: chatAdministratorRights;
     }
     
@@ -19176,7 +19505,7 @@ namespace TdApi {
         new_verbosity_level?: jsLogLevel;
     }
     
-    export type TdFunction = getAuthorizationState | setTdlibParameters | setAuthenticationPhoneNumber | setAuthenticationEmailAddress | resendAuthenticationCode | checkAuthenticationEmailCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | resetAuthenticationEmailAddress | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | sendAuthenticationFirebaseSms | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | setLoginEmailAddress | resendLoginEmailAddressCode | checkLoginEmailAddressCode | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getTopChats | removeTopChat | searchRecentlyFoundChats | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchCallMessages | searchOutgoingDocumentMessages | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatMessagePosition | getChatScheduledMessages | getMessagePublicForwards | getChatSponsoredMessages | clickChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | translateMessageText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | resendMessages | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | getForumTopicDefaultIcons | createForumTopic | editForumTopic | getForumTopic | getForumTopicLink | getForumTopics | setForumTopicNotificationSettings | toggleForumTopicIsClosed | toggleGeneralForumTopicIsHidden | toggleForumTopicIsPinned | setPinnedForumTopics | deleteForumTopic | getEmojiReaction | getCustomEmojiReactionAnimations | getMessageAvailableReactions | clearRecentReactions | addMessageReaction | removeMessageReaction | getMessageAddedReactions | setDefaultReactionType | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | getLoginUrlInfo | getLoginUrl | shareUserWithBot | shareChatWithBot | getInlineQueryResults | answerInlineQuery | searchWebApp | getWebAppLinkUrl | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLink | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllMessageThreadMentions | readAllChatReactions | readAllMessageThreadReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFolder | createChatFolder | editChatFolder | deleteChatFolder | getChatFolderChatsToLeave | getChatFolderChatCount | reorderChatFolders | getRecommendedChatFolders | getChatFolderDefaultIconName | getChatsForChatFolderInviteLink | createChatFolderInviteLink | getChatFolderInviteLinks | editChatFolderInviteLink | deleteChatFolderInviteLink | checkChatFolderInviteLink | addChatFolderByInviteLink | getChatFolderNewChats | processChatFolderNewChats | getArchiveChatListSettings | setArchiveChatListSettings | setChatTitle | setChatPhoto | setChatMessageAutoDeleteTime | setChatPermissions | setChatBackground | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatIsTranslatable | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | unpinAllMessageThreadMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | readChatList | getStory | sendStory | editStory | setStoryPrivacySettings | toggleStoryIsPinned | deleteStory | getStoryNotificationSettingsExceptions | loadActiveStories | setChatActiveStoriesList | getChatActiveStories | getChatPinnedStories | getArchivedStories | openStory | closeStory | getStoryViewers | reportStory | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | getThemedEmojiStatuses | getRecentEmojiStatuses | getDefaultEmojiStatuses | clearRecentEmojiStatuses | downloadFile | cancelDownloadFile | getSuggestedFileName | preliminaryUploadFile | cancelPreliminaryUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | toggleMessageSenderIsBlocked | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | setCloseFriends | getCloseFriends | setUserPersonalProfilePhoto | suggestUserProfilePhoto | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | searchStickers | getPremiumStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getEmojiCategories | getAnimatedEmoji | getEmojiSuggestionsUrl | getCustomEmojiStickers | getDefaultChatPhotoCustomEmojiStickers | getDefaultProfilePhotoCustomEmojiStickers | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setName | setBio | setUsername | toggleUsernameIsActive | reorderActiveUsernames | setEmojiStatus | setLocation | changePhoneNumber | resendChangePhoneNumberCode | checkChangePhoneNumberCode | getUserLink | searchUserByToken | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | setBotName | getBotName | setBotProfilePhoto | toggleBotUsernameIsActive | reorderBotActiveUsernames | setBotInfoDescription | getBotInfoDescription | setBotInfoShortDescription | getBotInfoShortDescription | getActiveSessions | terminateSession | terminateAllOtherSessions | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | toggleSupergroupUsernameIsActive | disableAllSupergroupUsernames | reorderSupergroupActiveUsernames | setSupergroupStickerSet | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupHasHiddenMembers | toggleSupergroupHasAggressiveAntiSpamEnabled | toggleSupergroupIsForum | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | reportSupergroupAntiSpamFalsePositive | getSupergroupMembers | closeSecretChat | getChatEventLog | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | getSupportUser | getBackgrounds | getBackgroundUrl | searchBackground | setBackground | removeBackground | resetBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | setDefaultMessageAutoDeleteTime | getDefaultMessageAutoDeleteTime | removeChatActionBar | reportChat | reportChatPhoto | reportMessageReactions | getChatStatistics | getMessageStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getAutosaveSettings | setAutosaveSettings | clearAutosaveSettingsExceptions | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendPhoneNumberVerificationCode | resendPhoneNumberVerificationCode | checkPhoneNumberVerificationCode | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | sendPhoneNumberConfirmationCode | resendPhoneNumberConfirmationCode | checkPhoneNumberConfirmationCode | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | setStickerSetThumbnail | setCustomEmojiStickerSetThumbnail | setStickerSetTitle | deleteStickerSet | setStickerPositionInSet | removeStickerFromSet | setStickerEmojis | setStickerKeywords | setStickerMaskPosition | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickerExamples | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | canPurchasePremium | assignAppStoreTransaction | assignGooglePlayTransaction | acceptTermsOfService | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getDeepLinkInfo | getApplicationConfig | addApplicationChangelog | saveApplicationLogEvent | getApplicationDownloadLink | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | getUserSupportInfo | setUserSupportInfo | getSupportName | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
+    export type TdFunction = getAuthorizationState | setTdlibParameters | setAuthenticationPhoneNumber | setAuthenticationEmailAddress | resendAuthenticationCode | checkAuthenticationEmailCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | resetAuthenticationEmailAddress | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | sendAuthenticationFirebaseSms | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | setLoginEmailAddress | resendLoginEmailAddressCode | checkLoginEmailAddressCode | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getTopChats | removeTopChat | searchRecentlyFoundChats | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchCallMessages | searchOutgoingDocumentMessages | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatMessagePosition | getChatScheduledMessages | getMessagePublicForwards | getChatSponsoredMessages | clickChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | translateMessageText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | resendMessages | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | getForumTopicDefaultIcons | createForumTopic | editForumTopic | getForumTopic | getForumTopicLink | getForumTopics | setForumTopicNotificationSettings | toggleForumTopicIsClosed | toggleGeneralForumTopicIsHidden | toggleForumTopicIsPinned | setPinnedForumTopics | deleteForumTopic | getEmojiReaction | getCustomEmojiReactionAnimations | getMessageAvailableReactions | clearRecentReactions | addMessageReaction | removeMessageReaction | getMessageAddedReactions | setDefaultReactionType | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | getLoginUrlInfo | getLoginUrl | shareUserWithBot | shareChatWithBot | getInlineQueryResults | answerInlineQuery | searchWebApp | getWebAppLinkUrl | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLink | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllMessageThreadMentions | readAllChatReactions | readAllMessageThreadReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFolder | createChatFolder | editChatFolder | deleteChatFolder | getChatFolderChatsToLeave | getChatFolderChatCount | reorderChatFolders | getRecommendedChatFolders | getChatFolderDefaultIconName | getChatsForChatFolderInviteLink | createChatFolderInviteLink | getChatFolderInviteLinks | editChatFolderInviteLink | deleteChatFolderInviteLink | checkChatFolderInviteLink | addChatFolderByInviteLink | getChatFolderNewChats | processChatFolderNewChats | getArchiveChatListSettings | setArchiveChatListSettings | setChatTitle | setChatPhoto | setChatMessageAutoDeleteTime | setChatPermissions | setChatBackground | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatIsTranslatable | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | unpinAllMessageThreadMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | readChatList | getStory | canSendStory | sendStory | editStory | setStoryPrivacySettings | toggleStoryIsPinned | deleteStory | getStoryNotificationSettingsExceptions | loadActiveStories | setChatActiveStoriesList | getChatActiveStories | getChatPinnedStories | getArchivedStories | openStory | closeStory | getStoryAvailableReactions | setStoryReaction | getStoryViewers | reportStory | activateStoryStealthMode | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | getThemedEmojiStatuses | getRecentEmojiStatuses | getDefaultEmojiStatuses | clearRecentEmojiStatuses | downloadFile | cancelDownloadFile | getSuggestedFileName | preliminaryUploadFile | cancelPreliminaryUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | setMessageSenderBlockList | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | setCloseFriends | getCloseFriends | setUserPersonalProfilePhoto | suggestUserProfilePhoto | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | searchStickers | getPremiumStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getEmojiCategories | getAnimatedEmoji | getEmojiSuggestionsUrl | getCustomEmojiStickers | getDefaultChatPhotoCustomEmojiStickers | getDefaultProfilePhotoCustomEmojiStickers | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setName | setBio | setUsername | toggleUsernameIsActive | reorderActiveUsernames | setEmojiStatus | setLocation | changePhoneNumber | resendChangePhoneNumberCode | checkChangePhoneNumberCode | getUserLink | searchUserByToken | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | setBotName | getBotName | setBotProfilePhoto | toggleBotUsernameIsActive | reorderBotActiveUsernames | setBotInfoDescription | getBotInfoDescription | setBotInfoShortDescription | getBotInfoShortDescription | getActiveSessions | terminateSession | terminateAllOtherSessions | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | toggleSupergroupUsernameIsActive | disableAllSupergroupUsernames | reorderSupergroupActiveUsernames | setSupergroupStickerSet | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupHasHiddenMembers | toggleSupergroupHasAggressiveAntiSpamEnabled | toggleSupergroupIsForum | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | reportSupergroupAntiSpamFalsePositive | getSupergroupMembers | closeSecretChat | getChatEventLog | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | getSupportUser | getBackgrounds | getBackgroundUrl | searchBackground | setBackground | removeBackground | resetBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | setDefaultMessageAutoDeleteTime | getDefaultMessageAutoDeleteTime | removeChatActionBar | reportChat | reportChatPhoto | reportMessageReactions | getChatStatistics | getMessageStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getAutosaveSettings | setAutosaveSettings | clearAutosaveSettingsExceptions | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendPhoneNumberVerificationCode | resendPhoneNumberVerificationCode | checkPhoneNumberVerificationCode | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | sendPhoneNumberConfirmationCode | resendPhoneNumberConfirmationCode | checkPhoneNumberConfirmationCode | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | setStickerSetThumbnail | setCustomEmojiStickerSetThumbnail | setStickerSetTitle | deleteStickerSet | setStickerPositionInSet | removeStickerFromSet | setStickerEmojis | setStickerKeywords | setStickerMaskPosition | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickerExamples | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | canPurchasePremium | assignAppStoreTransaction | assignGooglePlayTransaction | acceptTermsOfService | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getDeepLinkInfo | getApplicationConfig | addApplicationChangelog | saveApplicationLogEvent | getApplicationDownloadLink | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | getUserSupportInfo | setUserSupportInfo | getSupportName | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
     export type TdFunctionReturn<t> = 
     t extends getAuthorizationState ? AuthorizationState :
         t extends setTdlibParameters ? Ok :
@@ -19455,6 +19784,7 @@ namespace TdApi {
         t extends setPinnedChats ? Ok :
         t extends readChatList ? Ok :
         t extends getStory ? Story :
+        t extends canSendStory ? CanSendStoryResult :
         t extends sendStory ? Story :
         t extends editStory ? Ok :
         t extends setStoryPrivacySettings ? Ok :
@@ -19468,8 +19798,11 @@ namespace TdApi {
         t extends getArchivedStories ? Stories :
         t extends openStory ? Ok :
         t extends closeStory ? Ok :
-        t extends getStoryViewers ? MessageViewers :
+        t extends getStoryAvailableReactions ? AvailableReactions :
+        t extends setStoryReaction ? Ok :
+        t extends getStoryViewers ? StoryViewers :
         t extends reportStory ? Ok :
+        t extends activateStoryStealthMode ? Ok :
         t extends getAttachmentMenuBot ? AttachmentMenuBot :
         t extends toggleBotIsAddedToAttachmentMenu ? Ok :
         t extends getThemedEmojiStatuses ? EmojiStatuses :
@@ -19547,7 +19880,7 @@ namespace TdApi {
         t extends endGroupCall ? Ok :
         t extends getGroupCallStreams ? GroupCallStreams :
         t extends getGroupCallStreamSegment ? FilePart :
-        t extends toggleMessageSenderIsBlocked ? Ok :
+        t extends setMessageSenderBlockList ? Ok :
         t extends blockMessageSenderFromReplies ? Ok :
         t extends getBlockedMessageSenders ? MessageSenders :
         t extends addContact ? Ok :
