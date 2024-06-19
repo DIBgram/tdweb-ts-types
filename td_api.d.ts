@@ -30,7 +30,7 @@ namespace TdApi {
     }
     
     
-    /** An authentication code is delivered via a private Telegram message, which can be viewed from another active session */
+    /** A digit-only authentication code is delivered via a private Telegram message, which can be viewed from another active session */
     export interface authenticationCodeTypeTelegramMessage {
         '@type': 'authenticationCodeTypeTelegramMessage';
         /** Length of the code */
@@ -38,7 +38,7 @@ namespace TdApi {
     }
     
     
-    /** An authentication code is delivered via an SMS message to the specified phone number; applications may not receive this type of code */
+    /** A digit-only authentication code is delivered via an SMS message to the specified phone number; non-official applications may not receive this type of code */
     export interface authenticationCodeTypeSms {
         '@type': 'authenticationCodeTypeSms';
         /** Length of the code */
@@ -46,7 +46,23 @@ namespace TdApi {
     }
     
     
-    /** An authentication code is delivered via a phone call to the specified phone number */
+    /** An authentication code is a word delivered via an SMS message to the specified phone number; non-official applications may not receive this type of code */
+    export interface authenticationCodeTypeSmsWord {
+        '@type': 'authenticationCodeTypeSmsWord';
+        /** The first letters of the word if known */
+        first_letter: string;
+    }
+    
+    
+    /** An authentication code is a phrase from multiple words delivered via an SMS message to the specified phone number; non-official applications may not receive this type of code */
+    export interface authenticationCodeTypeSmsPhrase {
+        '@type': 'authenticationCodeTypeSmsPhrase';
+        /** The first word of the phrase if known */
+        first_word: string;
+    }
+    
+    
+    /** A digit-only authentication code is delivered via a phone call to the specified phone number */
     export interface authenticationCodeTypeCall {
         '@type': 'authenticationCodeTypeCall';
         /** Length of the code */
@@ -72,7 +88,7 @@ namespace TdApi {
     }
     
     
-    /** An authentication code is delivered to https://fragment.com. The user must be logged in there via a wallet owning the phone number's NFT */
+    /** A digit-only authentication code is delivered to https://fragment.com. The user must be logged in there via a wallet owning the phone number's NFT */
     export interface authenticationCodeTypeFragment {
         '@type': 'authenticationCodeTypeFragment';
         /** URL to open to receive the code */
@@ -82,17 +98,19 @@ namespace TdApi {
     }
     
     
-    /** An authentication code is delivered via Firebase Authentication to the official Android application */
+    /** A digit-only authentication code is delivered via Firebase Authentication to the official Android application */
     export interface authenticationCodeTypeFirebaseAndroid {
         '@type': 'authenticationCodeTypeFirebaseAndroid';
-        /** Nonce to pass to the SafetyNet Attestation API */
+        /** True, if Play Integrity API must be used for device verification. Otherwise, SafetyNet Attestation API must be used */
+        use_play_integrity: Bool;
+        /** Nonce to pass to the Play Integrity API or the SafetyNet Attestation API */
         nonce: bytes;
         /** Length of the code */
         length: int32;
     }
     
     
-    /** An authentication code is delivered via Firebase Authentication to the official iOS application */
+    /** A digit-only authentication code is delivered via Firebase Authentication to the official iOS application */
     export interface authenticationCodeTypeFirebaseIos {
         '@type': 'authenticationCodeTypeFirebaseIos';
         /** Receipt of successful application token validation to compare with receipt from push notification */
@@ -631,8 +649,8 @@ namespace TdApi {
     /** Describes one answer option of a poll */
     export interface pollOption {
         '@type': 'pollOption';
-        /** Option text; 1-100 characters */
-        text: string;
+        /** Option text; 1-100 characters. Only custom emoji entities are allowed */
+        text: formattedText;
         /** Number of voters for this option, available only for closed or voted polls */
         voter_count: int32;
         /** The percentage of votes for this option; 0-100 */
@@ -810,14 +828,14 @@ namespace TdApi {
     }
     
     
-    /** Describes a voice note. The voice note must be encoded with the Opus codec, and stored inside an OGG container. Voice notes can have only a single audio channel */
+    /** Describes a voice note */
     export interface voiceNote {
         '@type': 'voiceNote';
         /** Duration of the voice note, in seconds; as defined by the sender */
         duration: int32;
         /** A waveform representation of the voice note in 5-bit format */
         waveform: bytes;
-        /** MIME type of the file; as defined by the sender */
+        /** MIME type of the file; as defined by the sender. Usually, one of "audio/ogg" for Opus in an OGG container, "audio/mpeg" for an MP3 audio, or "audio/mp4" for an M4A audio */
         mime_type: string;
         /** Result of speech recognition in the voice note; may be null */
         speech_recognition_result?: SpeechRecognitionResult;
@@ -929,8 +947,8 @@ namespace TdApi {
         '@type': 'poll';
         /** Unique poll identifier */
         id: int64;
-        /** Poll question; 1-300 characters */
-        question: string;
+        /** Poll question; 1-300 characters. Only custom emoji entities are allowed */
+        question: formattedText;
         /** List of poll answer options */
         options: vector<pollOption>;
         /** Total number of voters, participating in the poll */
@@ -1239,9 +1257,9 @@ namespace TdApi {
     /** Describes an interval of time when the business is open */
     export interface businessOpeningHoursInterval {
         '@type': 'businessOpeningHoursInterval';
-        /** The first minute of the interval since start of the week; 0-7*24*60 */
+        /** The minute's sequence number in a week, starting on Monday, marking the start of the time interval during which the business is open; 0-7*24*60 */
         start_minute: int32;
-        /** The first minute after the end of the interval since start of the week; 1-8*24*60 */
+        /** The minute's sequence number in a week, starting on Monday, marking the end of the time interval during which the business is open; 1-8*24*60 */
         end_minute: int32;
     }
     
@@ -1263,6 +1281,12 @@ namespace TdApi {
         location?: businessLocation;
         /** Opening hours of the business; may be null if none. The hours are guaranteed to be valid and has already been split by week days */
         opening_hours?: businessOpeningHours;
+        /** Opening hours of the business in the local time; may be null if none. The hours are guaranteed to be valid and has already been split by week days. -Local time zone identifier will be empty. An updateUserFullInfo update is not triggered when value of this field changes */
+        local_opening_hours?: businessOpeningHours;
+        /** Time left before the business will open the next time, in seconds; 0 if unknown. An updateUserFullInfo update is not triggered when value of this field changes */
+        next_open_in: int32;
+        /** Time left before the business will close the next time, in seconds; 0 if unknown. An updateUserFullInfo update is not triggered when value of this field changes */
+        next_close_in: int32;
         /** The greeting message; may be null if none or the Business account is not of the current user */
         greeting_message_settings?: businessGreetingMessageSettings;
         /** The away message; may be null if none or the Business account is not of the current user */
@@ -1479,12 +1503,24 @@ namespace TdApi {
         can_manage_video_chats: Bool;
         /** True, if the administrator can create new chat stories, or edit and delete posted stories; applicable to supergroups and channels only */
         can_post_stories: Bool;
-        /** True, if the administrator can edit stories posted by other users, pin stories and access story archive; applicable to supergroups and channels only */
+        /** True, if the administrator can edit stories posted by other users, post stories to the chat page, pin chat stories, and access story archive; applicable to supergroups and channels only */
         can_edit_stories: Bool;
         /** True, if the administrator can delete stories posted by other users; applicable to supergroups and channels only */
         can_delete_stories: Bool;
         /** True, if the administrator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only */
         is_anonymous: Bool;
+    }
+    
+    
+    /** Contains information about a product that can be paid with invoice */
+    export interface productInfo {
+        '@type': 'productInfo';
+        /** Product title */
+        title: string;
+        /** Product description */
+        description: formattedText;
+        /** Product photo; may be null */
+        photo?: photo;
     }
     
     
@@ -1563,6 +1599,120 @@ namespace TdApi {
         user_id: int53;
         /** Point in time (Unix timestamp) when the code was activated; 0 if none */
         use_date: int32;
+    }
+    
+    
+    /** Describes an option for buying Telegram stars */
+    export interface starPaymentOption {
+        '@type': 'starPaymentOption';
+        /** ISO 4217 currency code for the payment */
+        currency: string;
+        /** The amount to pay, in the smallest units of the currency */
+        amount: int53;
+        /** Number of Telegram stars that will be purchased */
+        star_count: int53;
+        /** Identifier of the store product associated with the option; may be empty if none */
+        store_product_id: string;
+        /** True, if the option must be shown only in the full list of payment options */
+        is_additional: Bool;
+    }
+    
+    
+    /** Contains a list of options for buying Telegram stars */
+    export interface starPaymentOptions {
+        '@type': 'starPaymentOptions';
+        /** The list of options */
+        options: vector<starPaymentOption>;
+    }
+    
+    
+    /** The transaction is incoming and increases the number of owned Telegram stars */
+    export interface starTransactionDirectionIncoming {
+        '@type': 'starTransactionDirectionIncoming';
+    }
+    
+    
+    /** The transaction is outgoing and decreases the number of owned Telegram stars */
+    export interface starTransactionDirectionOutgoing {
+        '@type': 'starTransactionDirectionOutgoing';
+    }
+    
+    
+    /** The transaction is a transaction with Telegram through a bot */
+    export interface starTransactionPartnerTelegram {
+        '@type': 'starTransactionPartnerTelegram';
+    }
+    
+    
+    /** The transaction is a transaction with App Store */
+    export interface starTransactionPartnerAppStore {
+        '@type': 'starTransactionPartnerAppStore';
+    }
+    
+    
+    /** The transaction is a transaction with Google Play */
+    export interface starTransactionPartnerGooglePlay {
+        '@type': 'starTransactionPartnerGooglePlay';
+    }
+    
+    
+    /** The transaction is a transaction with Fragment */
+    export interface starTransactionPartnerFragment {
+        '@type': 'starTransactionPartnerFragment';
+        /** State of the withdrawal; may be null for refunds from Fragment */
+        withdrawal_state?: RevenueWithdrawalState;
+    }
+    
+    
+    /** The transaction is a transaction with another user */
+    export interface starTransactionPartnerUser {
+        '@type': 'starTransactionPartnerUser';
+        /** Identifier of the user */
+        user_id: int53;
+        /** Information about the bought product; may be null if none */
+        product_info?: productInfo;
+    }
+    
+    
+    /** The transaction is a transaction with a channel chat */
+    export interface starTransactionPartnerChannel {
+        '@type': 'starTransactionPartnerChannel';
+        /** Identifier of the chat */
+        chat_id: int53;
+    }
+    
+    
+    /** The transaction is a transaction with unknown partner */
+    export interface starTransactionPartnerUnsupported {
+        '@type': 'starTransactionPartnerUnsupported';
+    }
+    
+    
+    /** Represents a transaction changing the amount of owned Telegram stars */
+    export interface starTransaction {
+        '@type': 'starTransaction';
+        /** Unique identifier of the transaction */
+        id: string;
+        /** The amount of added owned Telegram stars; negative for outgoing transactions */
+        star_count: int53;
+        /** True, if the transaction is a refund of a previous transaction */
+        is_refund: Bool;
+        /** Point in time (Unix timestamp) when the transaction was completed */
+        date: int32;
+        /** Source of the incoming transaction, or its recipient for outgoing transactions */
+        partner: StarTransactionPartner;
+    }
+    
+    
+    /** Represents a list of Telegram star transactions */
+    export interface starTransactions {
+        '@type': 'starTransactions';
+        /** The amount of owned Telegram stars */
+        star_count: int53;
+        /** List of transactions with Telegram stars */
+        transactions: vector<starTransaction>;
+        /** The offset for the next request. If empty, then there are no more results */
+        next_offset: string;
     }
     
     
@@ -1819,8 +1969,10 @@ namespace TdApi {
         has_private_forwards: Bool;
         /** True, if voice and video notes can't be sent or forwarded to the user */
         has_restricted_voice_and_video_note_messages: Bool;
-        /** True, if the user has pinned stories */
-        has_pinned_stories: Bool;
+        /** True, if the user has posted to profile stories */
+        has_posted_to_profile_stories: Bool;
+        /** True, if the user always enabled sponsored messages; known only for the current user */
+        has_sponsored_messages_enabled: Bool;
         /** True, if the current user needs to explicitly allow to share their phone number with the user when the method addContact is used */
         need_phone_number_privacy_exception: Bool;
         /** True, if the user set chat background for both chat users and it wasn't reverted yet */
@@ -1875,7 +2027,7 @@ namespace TdApi {
     /** The user is the owner of the chat and has all the administrator privileges */
     export interface chatMemberStatusCreator {
         '@type': 'chatMemberStatusCreator';
-        /** A custom title of the owner; 0-16 characters without emojis; applicable to supergroups only */
+        /** A custom title of the owner; 0-16 characters without emoji; applicable to supergroups only */
         custom_title: string;
         /** True, if the creator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only */
         is_anonymous: Bool;
@@ -1887,7 +2039,7 @@ namespace TdApi {
     /** The user is a member of the chat and has some additional privileges. In basic groups, administrators can edit and delete messages sent by others, add new members, ban unprivileged members, and manage video chats. -In supergroups and channels, there are more detailed options for administrator privileges */
     export interface chatMemberStatusAdministrator {
         '@type': 'chatMemberStatusAdministrator';
-        /** A custom title of the administrator; 0-16 characters without emojis; applicable to supergroups only */
+        /** A custom title of the administrator; 0-16 characters without emoji; applicable to supergroups only */
         custom_title: string;
         /** True, if the current user can edit the administrator privileges for the called user */
         can_be_edited: Bool;
@@ -2273,7 +2425,7 @@ namespace TdApi {
         date: int32;
         /** Status of the current user in the supergroup or channel; custom title will always be empty */
         status: ChatMemberStatus;
-        /** Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through -getChatSimilarChats, getChatsToSendStories, getCreatedPublicChats, getGroupsInCommon, getInactiveSupergroupChats, getSuitableDiscussionChats, getUserPrivacySettingRules, getVideoChatAvailableParticipants, -searchChatsNearby, searchPublicChats, or in chatFolderInviteLinkInfo.missing_chat_ids, or for public chats in which where sent messages and posted stories from publicForwards, -or for public chats in which where sent messages from getMessagePublicForwards response */
+        /** Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through -getChatSimilarChats, getChatsToSendStories, getCreatedPublicChats, getGroupsInCommon, getInactiveSupergroupChats, getRecommendedChats, getSuitableDiscussionChats, -getUserPrivacySettingRules, getVideoChatAvailableParticipants, searchChatsNearby, searchPublicChats, or in chatFolderInviteLinkInfo.missing_chat_ids, or in userFullInfo.personal_chat_id, -or for chats with messages or stories from publicForwards */
         member_count: int32;
         /** Approximate boost level for the chat */
         boost_level: int32;
@@ -2670,6 +2822,40 @@ namespace TdApi {
     }
     
     
+    /** An effect from an emoji reaction */
+    export interface messageEffectTypeEmojiReaction {
+        '@type': 'messageEffectTypeEmojiReaction';
+        /** Select animation for the effect in TGS format */
+        select_animation: sticker;
+        /** Effect animation for the effect in TGS format */
+        effect_animation: sticker;
+    }
+    
+    
+    /** An effect from a premium sticker */
+    export interface messageEffectTypePremiumSticker {
+        '@type': 'messageEffectTypePremiumSticker';
+        /** The premium sticker. The effect can be found at sticker.full_type.premium_animation */
+        sticker: sticker;
+    }
+    
+    
+    /** Contains information about an effect added to a message */
+    export interface messageEffect {
+        '@type': 'messageEffect';
+        /** Unique identifier of the effect */
+        id: int64;
+        /** Static icon for the effect in WEBP format; may be null if none */
+        static_icon?: sticker;
+        /** Emoji corresponding to the effect that can be used if static icon isn't available */
+        emoji: string;
+        /** True, if Telegram Premium subscription is required to use the effect */
+        is_premium: Bool;
+        /** Type of the effect */
+        type: MessageEffectType;
+    }
+    
+    
     /** The message is being sent now, but has not yet been delivered to the server */
     export interface messageSendingStatePending {
         '@type': 'messageSendingStatePending';
@@ -2746,14 +2932,24 @@ namespace TdApi {
     }
     
     
-    /** Describes a message to be replied */
+    /** Describes a message to be replied in the same chat and forum topic */
     export interface inputMessageReplyToMessage {
         '@type': 'inputMessageReplyToMessage';
-        /** The identifier of the chat to which the message to be replied belongs; pass 0 if the message to be replied is in the same chat. Must always be 0 for replies in secret chats. A message can be replied in another chat or topic only if message.can_be_replied_in_another_chat */
-        chat_id: int53;
-        /** The identifier of the message to be replied in the same or the specified chat */
+        /** The identifier of the message to be replied in the same chat and forum topic */
         message_id: int53;
         /** Quote from the message to be replied; pass null if none. Must always be null for replies in secret chats */
+        quote: inputTextQuote;
+    }
+    
+    
+    /** Describes a message to be replied that is from a different chat or a forum topic; not supported in secret chats */
+    export interface inputMessageReplyToExternalMessage {
+        '@type': 'inputMessageReplyToExternalMessage';
+        /** The identifier of the chat to which the message to be replied belongs */
+        chat_id: int53;
+        /** The identifier of the message to be replied in the specified chat. A message can be replied in another chat or topic only if message.can_be_replied_in_another_chat */
+        message_id: int53;
+        /** Quote from the message to be replied; pass null if none */
         quote: inputTextQuote;
     }
     
@@ -2765,6 +2961,16 @@ namespace TdApi {
         story_sender_chat_id: int53;
         /** The identifier of the story */
         story_id: int32;
+    }
+    
+    
+    /** Describes a fact-check added to the message by an independent checker */
+    export interface factCheck {
+        '@type': 'factCheck';
+        /** Text of the fact-check */
+        text: formattedText;
+        /** A two-letter ISO 3166-1 alpha-2 country code of the country for which the fact-check is shown */
+        country_code: string;
     }
     
     
@@ -2833,6 +3039,8 @@ namespace TdApi {
         interaction_info?: messageInteractionInfo;
         /** Information about unread reactions added to the message */
         unread_reactions: vector<unreadReaction>;
+        /** Information about fact-check added to the message; may be null if none */
+        fact_check?: factCheck;
         /** Information about the message or the story this message is replying to; may be null if none */
         reply_to?: MessageReplyTo;
         /** If non-zero, the identifier of the message thread the message belongs to; unique within the chat to which the message belongs */
@@ -2855,6 +3063,8 @@ namespace TdApi {
         author_signature: string;
         /** Unique identifier of an album this message belongs to; 0 if none. Only audios, documents, photos and videos can be grouped together in albums */
         media_album_id: int64;
+        /** Unique identifier of the effect added to the message; 0 if none */
+        effect_id: int64;
         /** If non-empty, contains a human-readable description of the reason why access to this message must be restricted */
         restriction_reason: string;
         /** Content of the message */
@@ -3018,63 +3228,13 @@ namespace TdApi {
     }
     
     
-    /** The sponsor is a bot */
-    export interface messageSponsorTypeBot {
-        '@type': 'messageSponsorTypeBot';
-        /** User identifier of the bot */
-        bot_user_id: int53;
-        /** An internal link to be opened when the sponsored message is clicked */
-        link: InternalLinkType;
-    }
-    
-    
-    /** The sponsor is a web app */
-    export interface messageSponsorTypeWebApp {
-        '@type': 'messageSponsorTypeWebApp';
-        /** Web App title */
-        web_app_title: string;
-        /** An internal link to be opened when the sponsored message is clicked */
-        link: InternalLinkType;
-    }
-    
-    
-    /** The sponsor is a public channel chat */
-    export interface messageSponsorTypePublicChannel {
-        '@type': 'messageSponsorTypePublicChannel';
-        /** Sponsor chat identifier */
-        chat_id: int53;
-        /** An internal link to be opened when the sponsored message is clicked; may be null if the sponsor chat needs to be opened instead */
-        link?: InternalLinkType;
-    }
-    
-    
-    /** The sponsor is a private channel chat */
-    export interface messageSponsorTypePrivateChannel {
-        '@type': 'messageSponsorTypePrivateChannel';
-        /** Title of the chat */
-        title: string;
-        /** Invite link for the channel */
-        invite_link: string;
-    }
-    
-    
-    /** The sponsor is a website */
-    export interface messageSponsorTypeWebsite {
-        '@type': 'messageSponsorTypeWebsite';
-        /** URL of the website */
-        url: string;
-        /** Name of the website */
-        name: string;
-    }
-    
-    
     /** Information about the sponsor of a message */
     export interface messageSponsor {
         '@type': 'messageSponsor';
-        /** Type of the sponsor */
-        type: MessageSponsorType;
+        /** URL of the sponsor to be opened when the message is clicked */
+        url: string;
         /** Photo of the sponsor; may be null if must not be shown */
-        photo?: chatPhotoInfo;
+        photo?: photo;
         /** Additional optional information about the sponsor to be shown along with the message */
         info: string;
     }
@@ -3093,8 +3253,14 @@ namespace TdApi {
         content: MessageContent;
         /** Information about the sponsor of the message */
         sponsor: messageSponsor;
-        /** If non-empty, text for the message action button */
+        /** Title of the sponsored message */
+        title: string;
+        /** Text for the message action button */
         button_text: string;
+        /** Identifier of the accent color for title, button text and message background */
+        accent_color_id: int32;
+        /** Identifier of a custom emoji to be shown on the message background; 0 if none */
+        background_custom_emoji_id: int64;
         /** If non-empty, additional information about the sponsored message to be shown along with the message */
         additional_info: string;
     }
@@ -3274,6 +3440,38 @@ namespace TdApi {
     }
     
     
+    /** Notifications for reactions are disabled */
+    export interface reactionNotificationSourceNone {
+        '@type': 'reactionNotificationSourceNone';
+    }
+    
+    
+    /** Notifications for reactions are shown only for reactions from contacts */
+    export interface reactionNotificationSourceContacts {
+        '@type': 'reactionNotificationSourceContacts';
+    }
+    
+    
+    /** Notifications for reactions are shown for all reactions */
+    export interface reactionNotificationSourceAll {
+        '@type': 'reactionNotificationSourceAll';
+    }
+    
+    
+    /** Contains information about notification settings for reactions */
+    export interface reactionNotificationSettings {
+        '@type': 'reactionNotificationSettings';
+        /** Source of message reactions for which notifications are shown */
+        message_reaction_source: ReactionNotificationSource;
+        /** Source of story reactions for which notifications are shown */
+        story_reaction_source: ReactionNotificationSource;
+        /** Identifier of the notification sound to be played; 0 if sound is disabled */
+        sound_id: int64;
+        /** True, if reaction sender and emoji must be displayed in notifications */
+        show_preview: Bool;
+    }
+    
+    
     /** Contains information about a message draft */
     export interface draftMessage {
         '@type': 'draftMessage';
@@ -3283,6 +3481,8 @@ namespace TdApi {
         date: int32;
         /** Content of the message draft; must be of the type inputMessageText, inputMessageVideoNote, or inputMessageVoiceNote */
         input_message_text: InputMessageContent;
+        /** Identifier of the effect to apply to the message when it is sent; 0 if none */
+        effect_id: int64;
     }
     
     
@@ -3507,6 +3707,8 @@ namespace TdApi {
     /** All reactions are available in the chat */
     export interface chatAvailableReactionsAll {
         '@type': 'chatAvailableReactionsAll';
+        /** The maximum allowed number of reactions per message; 1-11 */
+        max_reaction_count: int32;
     }
     
     
@@ -3515,6 +3717,8 @@ namespace TdApi {
         '@type': 'chatAvailableReactionsSome';
         /** The list of reactions */
         reactions: vector<ReactionType>;
+        /** The maximum allowed number of reactions per message; 1-11 */
+        max_reaction_count: int32;
     }
     
     
@@ -4863,6 +5067,8 @@ namespace TdApi {
         story_sender_chat_id: int53;
         /** The identifier of the previewed story; 0 if none */
         story_id: int32;
+        /** Up to 4 stickers from the sticker set available via the link */
+        stickers: vector<sticker>;
         /** Version of web page instant view (currently, can be 1 or 2); 0 if none */
         instant_view_version: int32;
     }
@@ -4975,6 +5181,20 @@ namespace TdApi {
         street_line2: string;
         /** Address postal code */
         postal_code: string;
+    }
+    
+    
+    /** Describes an address of a location */
+    export interface locationAddress {
+        '@type': 'locationAddress';
+        /** A two-letter ISO 3166-1 alpha-2 country code */
+        country_code: string;
+        /** State, if applicable; empty if unknown */
+        state: string;
+        /** City; empty if unknown */
+        city: string;
+        /** The address; empty if unknown */
+        street: string;
     }
     
     
@@ -5166,15 +5386,11 @@ namespace TdApi {
     }
     
     
-    /** Contains information about an invoice payment form */
-    export interface paymentForm {
-        '@type': 'paymentForm';
-        /** The payment form identifier */
-        id: int64;
+    /** The payment form is for a regular payment */
+    export interface paymentFormTypeRegular {
+        '@type': 'paymentFormTypeRegular';
         /** Full information about the invoice */
         invoice: invoice;
-        /** User identifier of the seller bot */
-        seller_bot_user_id: int53;
         /** User identifier of the payment provider bot */
         payment_provider_user_id: int53;
         /** Information about the payment provider */
@@ -5189,12 +5405,28 @@ namespace TdApi {
         can_save_credentials: Bool;
         /** True, if the user will be able to save credentials, if sets up a 2-step verification password */
         need_password: Bool;
-        /** Product title */
-        product_title: string;
-        /** Product description */
-        product_description: formattedText;
-        /** Product photo; may be null */
-        product_photo?: photo;
+    }
+    
+    
+    /** The payment form is for a payment in Telegram stars */
+    export interface paymentFormTypeStars {
+        '@type': 'paymentFormTypeStars';
+        /** Number of Telegram stars that will be paid */
+        star_count: int53;
+    }
+    
+    
+    /** Contains information about an invoice payment form */
+    export interface paymentForm {
+        '@type': 'paymentForm';
+        /** The payment form identifier */
+        id: int64;
+        /** Type of the payment form */
+        type: PaymentFormType;
+        /** User identifier of the seller bot */
+        seller_bot_user_id: int53;
+        /** Information about the product */
+        product_info: productInfo;
     }
     
     
@@ -5218,19 +5450,9 @@ namespace TdApi {
     }
     
     
-    /** Contains information about a successful payment */
-    export interface paymentReceipt {
-        '@type': 'paymentReceipt';
-        /** Product title */
-        title: string;
-        /** Product description */
-        description: formattedText;
-        /** Product photo; may be null */
-        photo?: photo;
-        /** Point in time (Unix timestamp) when the payment was made */
-        date: int32;
-        /** User identifier of the seller bot */
-        seller_bot_user_id: int53;
+    /** The payment was done using a third-party payment provider */
+    export interface paymentReceiptTypeRegular {
+        '@type': 'paymentReceiptTypeRegular';
         /** User identifier of the payment provider bot */
         payment_provider_user_id: int53;
         /** Information about the invoice */
@@ -5243,6 +5465,30 @@ namespace TdApi {
         credentials_title: string;
         /** The amount of tip chosen by the buyer in the smallest units of the currency */
         tip_amount: int53;
+    }
+    
+    
+    /** The payment was done using Telegram stars */
+    export interface paymentReceiptTypeStars {
+        '@type': 'paymentReceiptTypeStars';
+        /** Number of Telegram stars that were paid */
+        star_count: int53;
+        /** Unique identifier of the transaction that can be used to dispute it */
+        transaction_id: string;
+    }
+    
+    
+    /** Contains information about a successful payment */
+    export interface paymentReceipt {
+        '@type': 'paymentReceipt';
+        /** Information about the product */
+        product_info: productInfo;
+        /** Point in time (Unix timestamp) when the payment was made */
+        date: int32;
+        /** User identifier of the seller bot */
+        seller_bot_user_id: int53;
+        /** Type of the payment receipt */
+        type: PaymentReceiptType;
     }
     
     
@@ -5991,6 +6237,8 @@ namespace TdApi {
         animation: animation;
         /** Animation caption */
         caption: formattedText;
+        /** True, if caption must be shown above the animation; otherwise, caption must be shown below the animation */
+        show_caption_above_media: Bool;
         /** True, if the animation preview must be covered by a spoiler animation */
         has_spoiler: Bool;
         /** True, if the animation thumbnail must be blurred and the animation must be shown only while tapped */
@@ -6025,6 +6273,8 @@ namespace TdApi {
         photo: photo;
         /** Photo caption */
         caption: formattedText;
+        /** True, if caption must be shown above the photo; otherwise, caption must be shown below the photo */
+        show_caption_above_media: Bool;
         /** True, if the photo preview must be covered by a spoiler animation */
         has_spoiler: Bool;
         /** True, if the photo must be blurred and must be shown only while tapped */
@@ -6049,6 +6299,8 @@ namespace TdApi {
         video: video;
         /** Video caption */
         caption: formattedText;
+        /** True, if caption must be shown above the video; otherwise, caption must be shown below the video */
+        show_caption_above_media: Bool;
         /** True, if the video preview must be covered by a spoiler animation */
         has_spoiler: Bool;
         /** True, if the video thumbnail must be blurred and the video must be shown only while tapped */
@@ -6109,9 +6361,9 @@ namespace TdApi {
         '@type': 'messageLocation';
         /** The location description */
         location: location;
-        /** Time relative to the message send date, for which the location can be updated, in seconds */
+        /** Time relative to the message send date, for which the location can be updated, in seconds; if 0x7FFFFFFF, then location can be updated forever */
         live_period: int32;
-        /** Left time for which the location can be updated, in seconds. updateMessageContent is not sent when this field changes */
+        /** Left time for which the location can be updated, in seconds. If 0, then the location can't be updated anymore. The update updateMessageContent is not sent when this field changes */
         expires_in: int32;
         /** For live locations, a direction in which the location moves, in degrees; 1-360. If 0 the direction is unknown */
         heading: int32;
@@ -6149,9 +6401,9 @@ namespace TdApi {
     /** A dice message. The dice value is randomly generated by the server */
     export interface messageDice {
         '@type': 'messageDice';
-        /** The animated stickers with the initial dice animation; may be null if unknown. updateMessageContent will be sent when the sticker became known */
+        /** The animated stickers with the initial dice animation; may be null if unknown. The update updateMessageContent will be sent when the sticker became known */
         initial_state?: DiceStickers;
-        /** The animated stickers with the final dice animation; may be null if unknown. updateMessageContent will be sent when the sticker became known */
+        /** The animated stickers with the final dice animation; may be null if unknown. The update updateMessageContent will be sent when the sticker became known */
         final_state?: DiceStickers;
         /** Emoji on which the dice throw animation is based */
         emoji: string;
@@ -6193,12 +6445,8 @@ namespace TdApi {
     /** A message with an invoice from a bot. Use getInternalLink with internalLinkTypeBotStart to share the invoice */
     export interface messageInvoice {
         '@type': 'messageInvoice';
-        /** Product title */
-        title: string;
-        /** Product description */
-        description: formattedText;
-        /** Product photo; may be null */
-        photo?: photo;
+        /** Information about the product */
+        product_info: productInfo;
         /** Currency for the product price */
         currency: string;
         /** Product total price in the smallest units of the currency */
@@ -6804,9 +7052,15 @@ namespace TdApi {
     }
     
     
-    /** Text that must be formatted as if inside a blockquote HTML tag */
+    /** Text that must be formatted as if inside a blockquote HTML tag; not supported in secret chats */
     export interface textEntityTypeBlockQuote {
         '@type': 'textEntityTypeBlockQuote';
+    }
+    
+    
+    /** Text that must be formatted as if inside a blockquote HTML tag and collapsed by default to 3 lines with the ability to show full text; not supported in secret chats */
+    export interface textEntityTypeExpandableBlockQuote {
+        '@type': 'textEntityTypeExpandableBlockQuote';
     }
     
     
@@ -6895,6 +7149,8 @@ namespace TdApi {
         update_order_of_installed_sticker_sets: Bool;
         /** Message scheduling state; pass null to send message immediately. Messages sent to a secret chat, live location messages and self-destructing messages can't be scheduled */
         scheduling_state: MessageSchedulingState;
+        /** Identifier of the effect to apply to the message; pass 0 if none; applicable only to sendMessage and sendMessageAlbum in private chats */
+        effect_id: int64;
         /** Non-persistent identifier, which will be returned back in messageSendingStatePending object and can be used to match sent messages and corresponding updateNewMessage updates */
         sending_id: int32;
         /** Pass true to get a fake message instead of actually sending them */
@@ -6911,13 +7167,15 @@ namespace TdApi {
         replace_caption: Bool;
         /** New message caption; pass null to copy message without caption. Ignored if replace_caption is false */
         new_caption: formattedText;
+        /** True, if new caption must be shown above the animation; otherwise, new caption must be shown below the animation; not supported in secret chats. Ignored if replace_caption is false */
+        new_show_caption_above_media: Bool;
     }
     
     
     /** A text message */
     export interface inputMessageText {
         '@type': 'inputMessageText';
-        /** Formatted text to be sent; 0-getOption("message_text_length_max") characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, BlockQuote, Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually */
+        /** Formatted text to be sent; 0-getOption("message_text_length_max") characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, BlockQuote, ExpandableBlockQuote, -Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually */
         text: formattedText;
         /** Options to be used for generation of a link preview; may be null if none; pass null to use default link preview options */
         link_preview_options?: linkPreviewOptions;
@@ -6943,6 +7201,8 @@ namespace TdApi {
         height: int32;
         /** Animation caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters */
         caption: formattedText;
+        /** True, if caption must be shown above the animation; otherwise, caption must be shown below the animation; not supported in secret chats */
+        show_caption_above_media: Bool;
         /** True, if the animation preview must be covered by a spoiler animation; not supported in secret chats */
         has_spoiler: Bool;
     }
@@ -6995,6 +7255,8 @@ namespace TdApi {
         height: int32;
         /** Photo caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters */
         caption: formattedText;
+        /** True, if caption must be shown above the photo; otherwise, caption must be shown below the photo; not supported in secret chats */
+        show_caption_above_media: Bool;
         /** Photo self-destruct type; pass null if none; private chats only */
         self_destruct_type: MessageSelfDestructType;
         /** True, if the photo preview must be covered by a spoiler animation; not supported in secret chats */
@@ -7037,6 +7299,8 @@ namespace TdApi {
         supports_streaming: Bool;
         /** Video caption; pass null to use an empty caption; 0-getOption("message_caption_length_max") characters */
         caption: formattedText;
+        /** True, if caption must be shown above the video; otherwise, caption must be shown below the video; not supported in secret chats */
+        show_caption_above_media: Bool;
         /** Video self-destruct type; pass null if none; private chats only */
         self_destruct_type: MessageSelfDestructType;
         /** True, if the video preview must be covered by a spoiler animation; not supported in secret chats */
@@ -7063,7 +7327,7 @@ namespace TdApi {
     /** A voice note message */
     export interface inputMessageVoiceNote {
         '@type': 'inputMessageVoiceNote';
-        /** Voice note to be sent */
+        /** Voice note to be sent. The voice note must be encoded with the Opus codec and stored inside an OGG container with a single audio channel, or be in MP3 or M4A format as regular audio */
         voice_note: InputFile;
         /** Duration of the voice note, in seconds */
         duration: int32;
@@ -7081,7 +7345,7 @@ namespace TdApi {
         '@type': 'inputMessageLocation';
         /** Location to be sent */
         location: location;
-        /** Period for which the location can be updated, in seconds; must be between 60 and 86400 for a live location and 0 otherwise */
+        /** Period for which the location can be updated, in seconds; must be between 60 and 86400 for a temporary live location, 0x7FFFFFFF for permanent live location, and 0 otherwise */
         live_period: int32;
         /** For live locations, a direction in which the location moves, in degrees; 1-360. Pass 0 if unknown */
         heading: int32;
@@ -7145,7 +7409,7 @@ namespace TdApi {
         photo_height: int32;
         /** The invoice payload */
         payload: bytes;
-        /** Payment provider token */
+        /** Payment provider token; may be empty for payments in Telegram Stars */
         provider_token: string;
         /** JSON-encoded data about the invoice, which will be shared with the payment provider */
         provider_data: string;
@@ -7159,10 +7423,10 @@ namespace TdApi {
     /** A message with a poll. Polls can't be sent to secret chats. Polls can be sent only to a private chat with a bot */
     export interface inputMessagePoll {
         '@type': 'inputMessagePoll';
-        /** Poll question; 1-255 characters (up to 300 characters for bots) */
-        question: string;
-        /** List of poll answer options, 2-10 strings 1-100 characters each */
-        options: vector<string>;
+        /** Poll question; 1-255 characters (up to 300 characters for bots). Only custom emoji entities are allowed to be added and only by Premium users */
+        question: formattedText;
+        /** List of poll answer options, 2-10 strings 1-100 characters each. Only custom emoji entities are allowed to be added and only by Premium users */
+        options: vector<formattedText>;
         /** True, if the poll voters are anonymous. Non-anonymous polls can't be sent or forwarded to channels */
         is_anonymous: Bool;
         /** Type of the poll */
@@ -7460,10 +7724,10 @@ namespace TdApi {
     }
     
     
-    /** Represents a list of emoji with their keywords */
+    /** Represents a list of emojis with their keywords */
     export interface emojiKeywords {
         '@type': 'emojiKeywords';
-        /** List of emoji with their keywords */
+        /** List of emojis with their keywords */
         emoji_keywords: vector<emojiKeyword>;
     }
     
@@ -7476,7 +7740,7 @@ namespace TdApi {
     }
     
     
-    /** Represents a list of emoji */
+    /** Represents a list of emojis */
     export interface emojis {
         '@type': 'emojis';
         /** List of emojis */
@@ -7515,7 +7779,7 @@ namespace TdApi {
         is_viewed: Bool;
         /** List of stickers in this set */
         stickers: vector<sticker>;
-        /** A list of emoji corresponding to the stickers in the same order. The list is only for informational purposes, because a sticker is always sent with a fixed emoji from the corresponding Sticker object */
+        /** A list of emojis corresponding to the stickers in the same order. The list is only for informational purposes, because a sticker is always sent with a fixed emoji from the corresponding Sticker object */
         emojis: vector<emojis>;
     }
     
@@ -7578,15 +7842,31 @@ namespace TdApi {
     }
     
     
-    /** Contains a list of similar emoji to search for in getStickers and searchStickers */
+    /** The category contains a list of similar emoji to search for in getStickers and searchStickers for stickers, -or getInlineQueryResults with the bot getOption("animation_search_bot_username") for animations */
+    export interface emojiCategorySourceSearch {
+        '@type': 'emojiCategorySourceSearch';
+        /** List of emojis to search for */
+        emojis: vector<string>;
+    }
+    
+    
+    /** The category contains premium stickers that must be found by getPremiumStickers */
+    export interface emojiCategorySourcePremium {
+        '@type': 'emojiCategorySourcePremium';
+    }
+    
+    
+    /** Describes an emoji category */
     export interface emojiCategory {
         '@type': 'emojiCategory';
         /** Name of the category */
         name: string;
         /** Custom emoji sticker, which represents icon of the category */
         icon: sticker;
-        /** List of emojis in the category */
-        emojis: vector<string>;
+        /** Source of stickers for the emoji category */
+        source: EmojiCategorySource;
+        /** True, if the category must be shown first when choosing a sticker for the start page */
+        is_greeting: Bool;
     }
     
     
@@ -7598,9 +7878,15 @@ namespace TdApi {
     }
     
     
-    /** The category must be used by default */
+    /** The category must be used by default (e.g., for custom emoji or animation search) */
     export interface emojiCategoryTypeDefault {
         '@type': 'emojiCategoryTypeDefault';
+    }
+    
+    
+    /** The category must be used by default for regular sticker selection. It may contain greeting emoji category and premium stickers */
+    export interface emojiCategoryTypeRegularStickers {
+        '@type': 'emojiCategoryTypeRegularStickers';
     }
     
     
@@ -7629,6 +7915,8 @@ namespace TdApi {
         height_percentage: double;
         /** Clockwise rotation angle of the rectangle, in degrees; 0-360 */
         rotation_angle: double;
+        /** The radius of the rectangle corner rounding, as a percentage of the media width */
+        corner_radius_percentage: double;
     }
     
     
@@ -7637,6 +7925,8 @@ namespace TdApi {
         '@type': 'storyAreaTypeLocation';
         /** The location */
         location: location;
+        /** Address of the location; may be null if unknown */
+        address?: locationAddress;
     }
     
     
@@ -7672,6 +7962,14 @@ namespace TdApi {
     }
     
     
+    /** An area pointing to a HTTP or tg:// link */
+    export interface storyAreaTypeLink {
+        '@type': 'storyAreaTypeLink';
+        /** HTTP or tg:// URL to be opened when the area is clicked */
+        url: string;
+    }
+    
+    
     /** Describes a clickable rectangle area on a story media */
     export interface storyArea {
         '@type': 'storyArea';
@@ -7687,6 +7985,8 @@ namespace TdApi {
         '@type': 'inputStoryAreaTypeLocation';
         /** The location */
         location: location;
+        /** Address of the location; pass null if unknown */
+        address: locationAddress;
     }
     
     
@@ -7732,6 +8032,14 @@ namespace TdApi {
     }
     
     
+    /** An area pointing to a HTTP or tg:// link */
+    export interface inputStoryAreaTypeLink {
+        '@type': 'inputStoryAreaTypeLink';
+        /** HTTP or tg:// URL to be opened when the area is clicked */
+        url: string;
+    }
+    
+    
     /** Describes a clickable rectangle area on a story media to be added */
     export interface inputStoryArea {
         '@type': 'inputStoryArea';
@@ -7745,7 +8053,7 @@ namespace TdApi {
     /** Contains a list of story areas to be added */
     export interface inputStoryAreas {
         '@type': 'inputStoryAreas';
-        /** List of input story areas. Currently, a story can have -up to 10 inputStoryAreaTypeLocation, inputStoryAreaTypeFoundVenue, and inputStoryAreaTypePreviousVenue areas, -up to getOption("story_suggested_reaction_area_count_max") inputStoryAreaTypeSuggestedReaction areas, and up to 1 inputStoryAreaTypeMessage area */
+        /** List of input story areas. Currently, a story can have -up to 10 inputStoryAreaTypeLocation, inputStoryAreaTypeFoundVenue, and inputStoryAreaTypePreviousVenue areas, -up to getOption("story_suggested_reaction_area_count_max") inputStoryAreaTypeSuggestedReaction areas, -up to 1 inputStoryAreaTypeMessage area, and -up to getOption("story_link_area_count_max") inputStoryAreaTypeLink areas if the current user is a Telegram Premium user */
         areas: vector<inputStoryArea>;
     }
     
@@ -7894,7 +8202,7 @@ namespace TdApi {
         /** True, if the story was edited */
         is_edited: Bool;
         /** True, if the story is saved in the sender's profile and will be available there after expiration */
-        is_pinned: Bool;
+        is_posted_to_chat_page: Bool;
         /** True, if the story is visible only for the current user */
         is_visible_only_for_self: Bool;
         /** True, if the story can be deleted */
@@ -7905,8 +8213,8 @@ namespace TdApi {
         can_be_forwarded: Bool;
         /** True, if the story can be replied in the chat with the story sender */
         can_be_replied: Bool;
-        /** True, if the story's is_pinned value can be changed */
-        can_toggle_is_pinned: Bool;
+        /** True, if the story's is_posted_to_chat_page value can be changed */
+        can_toggle_is_posted_to_chat_page: Bool;
         /** True, if the story statistics are available through getStoryStatistics */
         can_get_statistics: Bool;
         /** True, if interactions with the story can be received through getStoryInteractions */
@@ -7937,6 +8245,20 @@ namespace TdApi {
         total_count: int32;
         /** The list of stories */
         stories: vector<story>;
+        /** Identifiers of the pinned stories; returned only in getChatPostedToChatPageStories with from_story_id == 0 */
+        pinned_story_ids: vector<int32>;
+    }
+    
+    
+    /** Contains a list of stories found by a search */
+    export interface foundStories {
+        '@type': 'foundStories';
+        /** Approximate total number of stories found */
+        total_count: int32;
+        /** List of stories */
+        stories: vector<story>;
+        /** The offset for the next request. If empty, then there are no more results */
+        next_offset: string;
     }
     
     
@@ -8286,6 +8608,20 @@ namespace TdApi {
     }
     
     
+    /** The user requested to resend the code */
+    export interface resendCodeReasonUserRequest {
+        '@type': 'resendCodeReasonUserRequest';
+    }
+    
+    
+    /** The code is re-sent, because device verification has failed */
+    export interface resendCodeReasonVerificationFailed {
+        '@type': 'resendCodeReasonVerificationFailed';
+        /** Cause of the verification failure, for example, PLAY_SERVICES_NOT_AVAILABLE, APNS_RECEIVE_TIMEOUT, APNS_INIT_FAILED, etc. */
+        error_message: string;
+    }
+    
+    
     /** The call wasn't discarded, or the reason is unknown */
     export interface callDiscardReasonEmpty {
         '@type': 'callDiscardReasonEmpty';
@@ -8415,7 +8751,7 @@ namespace TdApi {
         config: string;
         /** Call encryption key */
         encryption_key: bytes;
-        /** Encryption key emojis fingerprint */
+        /** Encryption key fingerprint represented as 4 emoji */
         emojis: vector<string>;
         /** True, if peer-to-peer connection is allowed by users privacy settings */
         allow_p2p: Bool;
@@ -8717,6 +9053,8 @@ namespace TdApi {
         allow_missed_call: Bool;
         /** Pass true if the authenticated phone number is used on the current device */
         is_current_phone_number: Bool;
+        /** Pass true if there is a SIM card in the current device, but it is not possible to check whether phone number matches */
+        has_unknown_phone_number: Bool;
         /** For official applications only. True, if the application can use Android SMS Retriever API (requires Google Play Services >= 10.2) to automatically receive the authentication code from the SMS. See https://developers.google.com/identity/sms-retriever/ for more details */
         allow_sms_retriever_api: Bool;
         /** For official Android and iOS applications only; pass null otherwise. Settings for Firebase Authentication */
@@ -10492,7 +10830,7 @@ namespace TdApi {
     }
     
     
-    /** The ability to use links and formatting in story caption */
+    /** The ability to use links and formatting in story caption, and use inputStoryAreaTypeLink areas */
     export interface premiumStoryFeatureLinksAndFormatting {
         '@type': 'premiumStoryFeatureLinksAndFormatting';
     }
@@ -10664,6 +11002,18 @@ namespace TdApi {
     }
     
     
+    /** The user buying Telegram stars */
+    export interface storePaymentPurposeStars {
+        '@type': 'storePaymentPurposeStars';
+        /** ISO 4217 currency code of the payment currency */
+        currency: string;
+        /** Paid amount, in the smallest units of the currency */
+        amount: int53;
+        /** Number of bought stars */
+        star_count: int53;
+    }
+    
+    
     /** The user creating Telegram Premium gift codes for other users */
     export interface telegramPaymentPurposePremiumGiftCodes {
         '@type': 'telegramPaymentPurposePremiumGiftCodes';
@@ -10693,6 +11043,18 @@ namespace TdApi {
         winner_count: int32;
         /** Number of months the Telegram Premium subscription will be active for the users */
         month_count: int32;
+    }
+    
+    
+    /** The user buying Telegram stars */
+    export interface telegramPaymentPurposeStars {
+        '@type': 'telegramPaymentPurposeStars';
+        /** ISO 4217 currency code of the payment currency */
+        currency: string;
+        /** Paid amount, in the smallest units of the currency */
+        amount: int53;
+        /** Number of bought stars */
+        star_count: int53;
     }
     
     
@@ -10837,7 +11199,7 @@ namespace TdApi {
     /** Describes a freeform gradient fill of a background */
     export interface backgroundFillFreeformGradient {
         '@type': 'backgroundFillFreeformGradient';
-        /** A list of 3 or 4 colors of the freeform gradients in the RGB24 format */
+        /** A list of 3 or 4 colors of the freeform gradient in the RGB24 format */
         colors: vector<int32>;
     }
     
@@ -12414,7 +12776,7 @@ namespace TdApi {
     }
     
     
-    /** The link is a link to a chat by its username. Call searchPublicChat with the given chat username to process the link -If the chat is found, open its profile information screen or the chat itself. -If draft text isn't empty and the chat is a private chat, then put the draft text in the input field */
+    /** The link is a link to a chat by its username. Call searchPublicChat with the given chat username to process the link -If the chat is found, open its profile information screen or the chat itself. -If draft text isn't empty and the chat is a private chat with a regular user, then put the draft text in the input field */
     export interface internalLinkTypePublicChat {
         '@type': 'internalLinkTypePublicChat';
         /** Username of the chat */
@@ -13162,6 +13524,14 @@ namespace TdApi {
     }
     
     
+    /** Suggests the user to extend their expiring Telegram Premium subscription */
+    export interface suggestedActionExtendPremium {
+        '@type': 'suggestedActionExtendPremium';
+        /** A URL for managing Telegram Premium subscription */
+        manage_premium_subscription_url: string;
+    }
+    
+    
     /** Contains a counter */
     export interface count {
         '@type': 'count';
@@ -13492,6 +13862,20 @@ namespace TdApi {
     }
     
     
+    /** Contains information about revenue earned from sponsored messages in a chat */
+    export interface chatRevenueAmount {
+        '@type': 'chatRevenueAmount';
+        /** Cryptocurrency in which revenue is calculated */
+        cryptocurrency: string;
+        /** Total amount of the cryptocurrency earned, in the smallest units of the cryptocurrency */
+        total_amount: int64;
+        /** Amount of the cryptocurrency that isn't withdrawn yet, in the smallest units of the cryptocurrency */
+        balance_amount: int64;
+        /** Amount of the cryptocurrency available for withdrawal, in the smallest units of the cryptocurrency */
+        available_amount: int64;
+    }
+    
+    
     /** A detailed statistics about revenue earned from sponsored messages in a chat */
     export interface chatRevenueStatistics {
         '@type': 'chatRevenueStatistics';
@@ -13499,15 +13883,9 @@ namespace TdApi {
         revenue_by_hour_graph: StatisticalGraph;
         /** A graph containing amount of revenue */
         revenue_graph: StatisticalGraph;
-        /** Cryptocurrency in which revenue is calculated */
-        cryptocurrency: string;
-        /** Total amount of the cryptocurrency earned, in the smallest units of the cryptocurrency */
-        cryptocurrency_total_amount: int64;
-        /** Amount of the cryptocurrency that isn't withdrawn yet, in the smallest units of the cryptocurrency */
-        cryptocurrency_balance_amount: int64;
-        /** Amount of the cryptocurrency available for withdrawal, in the smallest units of the cryptocurrency */
-        cryptocurrency_available_amount: int64;
-        /** Current conversion rate of the cryptocurrency to USD */
+        /** Amount of earned revenue */
+        revenue_amount: chatRevenueAmount;
+        /** Current conversion rate of the cryptocurrency in which revenue is calculated to USD */
         usd_rate: double;
     }
     
@@ -13533,14 +13911,14 @@ namespace TdApi {
     
     
     /** Withdrawal is pending */
-    export interface chatRevenueWithdrawalStatePending {
-        '@type': 'chatRevenueWithdrawalStatePending';
+    export interface revenueWithdrawalStatePending {
+        '@type': 'revenueWithdrawalStatePending';
     }
     
     
-    /** Withdrawal was completed */
-    export interface chatRevenueWithdrawalStateCompleted {
-        '@type': 'chatRevenueWithdrawalStateCompleted';
+    /** Withdrawal succeeded */
+    export interface revenueWithdrawalStateSucceeded {
+        '@type': 'revenueWithdrawalStateSucceeded';
         /** Point in time (Unix timestamp) when the withdrawal was completed */
         date: int32;
         /** The URL where the withdrawal transaction can be viewed */
@@ -13548,9 +13926,9 @@ namespace TdApi {
     }
     
     
-    /** Withdrawal has_failed */
-    export interface chatRevenueWithdrawalStateFailed {
-        '@type': 'chatRevenueWithdrawalStateFailed';
+    /** Withdrawal failed */
+    export interface revenueWithdrawalStateFailed {
+        '@type': 'revenueWithdrawalStateFailed';
     }
     
     
@@ -13572,7 +13950,7 @@ namespace TdApi {
         /** Name of the payment provider */
         provider: string;
         /** State of the withdrawal */
-        state: ChatRevenueWithdrawalState;
+        state: RevenueWithdrawalState;
     }
     
     
@@ -13605,6 +13983,34 @@ namespace TdApi {
         total_count: int32;
         /** List of transactions */
         transactions: vector<chatRevenueTransaction>;
+    }
+    
+    
+    /** Contains information about Telegram stars earned by a bot or a chat */
+    export interface starRevenueStatus {
+        '@type': 'starRevenueStatus';
+        /** Total number of the stars earned */
+        total_count: int53;
+        /** The number of Telegram stars that aren't withdrawn yet */
+        current_count: int53;
+        /** The number of Telegram stars that are available for withdrawal */
+        available_count: int53;
+        /** True, if Telegram stars can be withdrawn now or later */
+        withdrawal_enabled: Bool;
+        /** Time left before the next withdrawal can be started, in seconds; 0 if withdrawal can be started now */
+        next_withdrawal_in: int32;
+    }
+    
+    
+    /** A detailed statistics about Telegram stars earned by a bot or a chat */
+    export interface starRevenueStatistics {
+        '@type': 'starRevenueStatistics';
+        /** A graph containing amount of revenue in a given day */
+        revenue_by_day_graph: StatisticalGraph;
+        /** Telegram star revenue status */
+        status: starRevenueStatus;
+        /** Current conversion rate of a Telegram star to USD */
+        usd_rate: double;
     }
     
     
@@ -13688,7 +14094,7 @@ namespace TdApi {
     }
     
     
-    /** Checks ownership of a new phone number to change the user's authentication phone number; for official Android and iOS applications only. */
+    /** Checks ownership of a new phone number to change the user's authentication phone number; for official Android and iOS applications only */
     export interface phoneNumberCodeTypeChange {
         '@type': 'phoneNumberCodeTypeChange';
     }
@@ -13839,6 +14245,18 @@ namespace TdApi {
         unread_reactions: vector<unreadReaction>;
         /** The new number of messages with unread reactions left in the chat */
         unread_reaction_count: int32;
+    }
+    
+    
+    /** A fact-check added to a message was changed */
+    export interface updateMessageFactCheck {
+        '@type': 'updateMessageFactCheck';
+        /** Chat identifier */
+        chat_id: int53;
+        /** Message identifier */
+        message_id: int53;
+        /** The new fact-check */
+        fact_check: factCheck;
     }
     
     
@@ -14284,6 +14702,14 @@ namespace TdApi {
     }
     
     
+    /** Notification settings for reactions were updated */
+    export interface updateReactionNotificationSettings {
+        '@type': 'updateReactionNotificationSettings';
+        /** The new notification settings */
+        notification_settings: reactionNotificationSettings;
+    }
+    
+    
     /** A notification was changed */
     export interface updateNotification {
         '@type': 'updateNotification';
@@ -14517,6 +14943,16 @@ namespace TdApi {
         file_id: int32;
         /** New number of being downloaded and recently downloaded files found */
         counts: downloadedFileCounts;
+    }
+    
+    
+    /** A request can't be completed unless application verification is performed; for official mobile applications only. -The method setApplicationVerificationToken must be called once the verification is completed or failed */
+    export interface updateApplicationVerificationRequired {
+        '@type': 'updateApplicationVerificationRequired';
+        /** Unique identifier for the verification process */
+        verification_id: int53;
+        /** Unique nonce for the classic Play Integrity verification (https://developer.android.com/google/play/integrity/classic) for Android, -or a unique string to compare with verify_nonce field from a push notification for iOS */
+        nonce: string;
     }
     
     
@@ -14844,6 +15280,16 @@ namespace TdApi {
     }
     
     
+    /** The list of available message effects has changed */
+    export interface updateAvailableMessageEffects {
+        '@type': 'updateAvailableMessageEffects';
+        /** The new list of available message effects from emoji reactions */
+        reaction_effect_ids: vector<int64>;
+        /** The new list of available message effects from Premium stickers */
+        sticker_effect_ids: vector<int64>;
+    }
+    
+    
     /** The type of default reaction has changed */
     export interface updateDefaultReactionType {
         '@type': 'updateDefaultReactionType';
@@ -14859,6 +15305,34 @@ namespace TdApi {
         saved_messages_topic_id: int53;
         /** The new tags */
         tags: savedMessagesTags;
+    }
+    
+    
+    /** The number of Telegram stars owned by the current user has changed */
+    export interface updateOwnedStarCount {
+        '@type': 'updateOwnedStarCount';
+        /** The new number of Telegram stars owned */
+        star_count: int53;
+    }
+    
+    
+    /** The revenue earned from sponsored messages in a chat has changed. If chat revenue screen is opened, then getChatRevenueTransactions may be called to fetch new transactions */
+    export interface updateChatRevenueAmount {
+        '@type': 'updateChatRevenueAmount';
+        /** Identifier of the chat */
+        chat_id: int53;
+        /** New amount of earned revenue */
+        revenue_amount: chatRevenueAmount;
+    }
+    
+    
+    /** The Telegram star revenue earned by a bot or a chat has changed. If star transactions screen of the chat is opened, then getStarTransactions may be called to fetch new transactions */
+    export interface updateStarRevenueStatus {
+        '@type': 'updateStarRevenueStatus';
+        /** Identifier of the owner of the Telegram stars */
+        owner_id: MessageSender;
+        /** New Telegram star revenue status */
+        status: starRevenueStatus;
     }
     
     
@@ -15050,6 +15524,24 @@ namespace TdApi {
     }
     
     
+    /** A new incoming callback query from a business message; for bots only */
+    export interface updateNewBusinessCallbackQuery {
+        '@type': 'updateNewBusinessCallbackQuery';
+        /** Unique query identifier */
+        id: int64;
+        /** Identifier of the user who sent the query */
+        sender_user_id: int53;
+        /** Unique identifier of the business connection */
+        connection_id: string;
+        /** The message from the business account from which the query originated */
+        message: businessMessage;
+        /** An identifier uniquely corresponding to the chat a message was sent to */
+        chat_instance: int64;
+        /** Query payload */
+        payload: CallbackQueryPayload;
+    }
+    
+    
     /** A new incoming shipping query; for bots only. Only for invoices with flexible price */
     export interface updateNewShippingQuery {
         '@type': 'updateNewShippingQuery';
@@ -15135,6 +15627,8 @@ namespace TdApi {
         date: int32;
         /** If user has joined the chat using an invite link, the invite link; may be null */
         invite_link?: chatInviteLink;
+        /** True, if the user has joined the chat after sending a join request and being approved by an administrator */
+        via_join_request: Bool;
         /** True, if the user has joined the chat using an invite link for a chat folder */
         via_chat_folder_invite_link: Bool;
         /** Previous chat member */
@@ -15334,7 +15828,7 @@ namespace TdApi {
     
     export type Error = error;
     export type Ok = ok;
-    export type AuthenticationCodeType = authenticationCodeTypeTelegramMessage | authenticationCodeTypeSms | authenticationCodeTypeCall | authenticationCodeTypeFlashCall | authenticationCodeTypeMissedCall | authenticationCodeTypeFragment | authenticationCodeTypeFirebaseAndroid | authenticationCodeTypeFirebaseIos;
+    export type AuthenticationCodeType = authenticationCodeTypeTelegramMessage | authenticationCodeTypeSms | authenticationCodeTypeSmsWord | authenticationCodeTypeSmsPhrase | authenticationCodeTypeCall | authenticationCodeTypeFlashCall | authenticationCodeTypeMissedCall | authenticationCodeTypeFragment | authenticationCodeTypeFirebaseAndroid | authenticationCodeTypeFirebaseIos;
     export type AuthenticationCodeInfo = authenticationCodeInfo;
     export type EmailAddressAuthenticationCodeInfo = emailAddressAuthenticationCodeInfo;
     export type EmailAddressAuthentication = emailAddressAuthenticationCode | emailAddressAuthenticationAppleId | emailAddressAuthenticationGoogleId;
@@ -15413,11 +15907,18 @@ namespace TdApi {
     export type InputChatPhoto = inputChatPhotoPrevious | inputChatPhotoStatic | inputChatPhotoAnimation | inputChatPhotoSticker;
     export type ChatPermissions = chatPermissions;
     export type ChatAdministratorRights = chatAdministratorRights;
+    export type ProductInfo = productInfo;
     export type PremiumPaymentOption = premiumPaymentOption;
     export type PremiumStatePaymentOption = premiumStatePaymentOption;
     export type PremiumGiftCodePaymentOption = premiumGiftCodePaymentOption;
     export type PremiumGiftCodePaymentOptions = premiumGiftCodePaymentOptions;
     export type PremiumGiftCodeInfo = premiumGiftCodeInfo;
+    export type StarPaymentOption = starPaymentOption;
+    export type StarPaymentOptions = starPaymentOptions;
+    export type StarTransactionDirection = starTransactionDirectionIncoming | starTransactionDirectionOutgoing;
+    export type StarTransactionPartner = starTransactionPartnerTelegram | starTransactionPartnerAppStore | starTransactionPartnerGooglePlay | starTransactionPartnerFragment | starTransactionPartnerUser | starTransactionPartnerChannel | starTransactionPartnerUnsupported;
+    export type StarTransaction = starTransaction;
+    export type StarTransactions = starTransactions;
     export type PremiumGiveawayParticipantStatus = premiumGiveawayParticipantStatusEligible | premiumGiveawayParticipantStatusParticipating | premiumGiveawayParticipantStatusAlreadyWasMember | premiumGiveawayParticipantStatusAdministrator | premiumGiveawayParticipantStatusDisallowedCountry;
     export type PremiumGiveawayInfo = premiumGiveawayInfoOngoing | premiumGiveawayInfoCompleted;
     export type AccentColor = accentColor;
@@ -15471,11 +15972,14 @@ namespace TdApi {
     export type MessageReactions = messageReactions;
     export type MessageInteractionInfo = messageInteractionInfo;
     export type UnreadReaction = unreadReaction;
+    export type MessageEffectType = messageEffectTypeEmojiReaction | messageEffectTypePremiumSticker;
+    export type MessageEffect = messageEffect;
     export type MessageSendingState = messageSendingStatePending | messageSendingStateFailed;
     export type TextQuote = textQuote;
     export type InputTextQuote = inputTextQuote;
     export type MessageReplyTo = messageReplyToMessage | messageReplyToStory;
-    export type InputMessageReplyTo = inputMessageReplyToMessage | inputMessageReplyToStory;
+    export type InputMessageReplyTo = inputMessageReplyToMessage | inputMessageReplyToExternalMessage | inputMessageReplyToStory;
+    export type FactCheck = factCheck;
     export type Message = message;
     export type Messages = messages;
     export type FoundMessages = foundMessages;
@@ -15487,7 +15991,6 @@ namespace TdApi {
     export type BusinessMessage = businessMessage;
     export type BusinessMessages = businessMessages;
     export type MessageSource = messageSourceChatHistory | messageSourceMessageThreadHistory | messageSourceForumTopicHistory | messageSourceHistoryPreview | messageSourceChatList | messageSourceSearch | messageSourceChatEventLog | messageSourceNotification | messageSourceScreenshot | messageSourceOther;
-    export type MessageSponsorType = messageSponsorTypeBot | messageSponsorTypeWebApp | messageSponsorTypePublicChannel | messageSponsorTypePrivateChannel | messageSponsorTypeWebsite;
     export type MessageSponsor = messageSponsor;
     export type SponsoredMessage = sponsoredMessage;
     export type SponsoredMessages = sponsoredMessages;
@@ -15499,6 +16002,8 @@ namespace TdApi {
     export type NotificationSettingsScope = notificationSettingsScopePrivateChats | notificationSettingsScopeGroupChats | notificationSettingsScopeChannelChats;
     export type ChatNotificationSettings = chatNotificationSettings;
     export type ScopeNotificationSettings = scopeNotificationSettings;
+    export type ReactionNotificationSource = reactionNotificationSourceNone | reactionNotificationSourceContacts | reactionNotificationSourceAll;
+    export type ReactionNotificationSettings = reactionNotificationSettings;
     export type DraftMessage = draftMessage;
     export type ChatType = chatTypePrivate | chatTypeBasicGroup | chatTypeSupergroup | chatTypeSecret;
     export type ChatFolderIcon = chatFolderIcon;
@@ -15564,6 +16069,7 @@ namespace TdApi {
     export type BankCardActionOpenUrl = bankCardActionOpenUrl;
     export type BankCardInfo = bankCardInfo;
     export type Address = address;
+    export type LocationAddress = locationAddress;
     export type ThemeParameters = themeParameters;
     export type LabeledPricePart = labeledPricePart;
     export type Invoice = invoice;
@@ -15573,9 +16079,11 @@ namespace TdApi {
     export type InputCredentials = inputCredentialsSaved | inputCredentialsNew | inputCredentialsApplePay | inputCredentialsGooglePay;
     export type PaymentProvider = paymentProviderSmartGlocal | paymentProviderStripe | paymentProviderOther;
     export type PaymentOption = paymentOption;
+    export type PaymentFormType = paymentFormTypeRegular | paymentFormTypeStars;
     export type PaymentForm = paymentForm;
     export type ValidatedOrderInfo = validatedOrderInfo;
     export type PaymentResult = paymentResult;
+    export type PaymentReceiptType = paymentReceiptTypeRegular | paymentReceiptTypeStars;
     export type PaymentReceipt = paymentReceipt;
     export type InputInvoice = inputInvoiceMessage | inputInvoiceName | inputInvoiceTelegram;
     export type MessageExtendedMedia = messageExtendedMediaPreview | messageExtendedMediaPhoto | messageExtendedMediaVideo | messageExtendedMediaUnsupported;
@@ -15602,7 +16110,7 @@ namespace TdApi {
     export type InputPassportElementErrorSource = inputPassportElementErrorSourceUnspecified | inputPassportElementErrorSourceDataField | inputPassportElementErrorSourceFrontSide | inputPassportElementErrorSourceReverseSide | inputPassportElementErrorSourceSelfie | inputPassportElementErrorSourceTranslationFile | inputPassportElementErrorSourceTranslationFiles | inputPassportElementErrorSourceFile | inputPassportElementErrorSourceFiles;
     export type InputPassportElementError = inputPassportElementError;
     export type MessageContent = messageText | messageAnimation | messageAudio | messageDocument | messagePhoto | messageSticker | messageVideo | messageVideoNote | messageVoiceNote | messageExpiredPhoto | messageExpiredVideo | messageExpiredVideoNote | messageExpiredVoiceNote | messageLocation | messageVenue | messageContact | messageAnimatedEmoji | messageDice | messageGame | messagePoll | messageStory | messageInvoice | messageCall | messageVideoChatScheduled | messageVideoChatStarted | messageVideoChatEnded | messageInviteVideoChatParticipants | messageBasicGroupChatCreate | messageSupergroupChatCreate | messageChatChangeTitle | messageChatChangePhoto | messageChatDeletePhoto | messageChatAddMembers | messageChatJoinByLink | messageChatJoinByRequest | messageChatDeleteMember | messageChatUpgradeTo | messageChatUpgradeFrom | messagePinMessage | messageScreenshotTaken | messageChatSetBackground | messageChatSetTheme | messageChatSetMessageAutoDeleteTime | messageChatBoost | messageForumTopicCreated | messageForumTopicEdited | messageForumTopicIsClosedToggled | messageForumTopicIsHiddenToggled | messageSuggestProfilePhoto | messageCustomServiceAction | messageGameScore | messagePaymentSuccessful | messagePaymentSuccessfulBot | messageGiftedPremium | messagePremiumGiftCode | messagePremiumGiveawayCreated | messagePremiumGiveaway | messagePremiumGiveawayCompleted | messagePremiumGiveawayWinners | messageContactRegistered | messageUsersShared | messageChatShared | messageBotWriteAccessAllowed | messageWebAppDataSent | messageWebAppDataReceived | messagePassportDataSent | messagePassportDataReceived | messageProximityAlertTriggered | messageUnsupported;
-    export type TextEntityType = textEntityTypeMention | textEntityTypeHashtag | textEntityTypeCashtag | textEntityTypeBotCommand | textEntityTypeUrl | textEntityTypeEmailAddress | textEntityTypePhoneNumber | textEntityTypeBankCardNumber | textEntityTypeBold | textEntityTypeItalic | textEntityTypeUnderline | textEntityTypeStrikethrough | textEntityTypeSpoiler | textEntityTypeCode | textEntityTypePre | textEntityTypePreCode | textEntityTypeBlockQuote | textEntityTypeTextUrl | textEntityTypeMentionName | textEntityTypeCustomEmoji | textEntityTypeMediaTimestamp;
+    export type TextEntityType = textEntityTypeMention | textEntityTypeHashtag | textEntityTypeCashtag | textEntityTypeBotCommand | textEntityTypeUrl | textEntityTypeEmailAddress | textEntityTypePhoneNumber | textEntityTypeBankCardNumber | textEntityTypeBold | textEntityTypeItalic | textEntityTypeUnderline | textEntityTypeStrikethrough | textEntityTypeSpoiler | textEntityTypeCode | textEntityTypePre | textEntityTypePreCode | textEntityTypeBlockQuote | textEntityTypeExpandableBlockQuote | textEntityTypeTextUrl | textEntityTypeMentionName | textEntityTypeCustomEmoji | textEntityTypeMediaTimestamp;
     export type InputThumbnail = inputThumbnail;
     export type MessageSchedulingState = messageSchedulingStateSendAtDate | messageSchedulingStateSendWhenOnline;
     export type MessageSelfDestructType = messageSelfDestructTypeTimer | messageSelfDestructTypeImmediately;
@@ -15620,13 +16128,14 @@ namespace TdApi {
     export type StickerSetInfo = stickerSetInfo;
     export type StickerSets = stickerSets;
     export type TrendingStickerSets = trendingStickerSets;
+    export type EmojiCategorySource = emojiCategorySourceSearch | emojiCategorySourcePremium;
     export type EmojiCategory = emojiCategory;
     export type EmojiCategories = emojiCategories;
-    export type EmojiCategoryType = emojiCategoryTypeDefault | emojiCategoryTypeEmojiStatus | emojiCategoryTypeChatPhoto;
+    export type EmojiCategoryType = emojiCategoryTypeDefault | emojiCategoryTypeRegularStickers | emojiCategoryTypeEmojiStatus | emojiCategoryTypeChatPhoto;
     export type StoryAreaPosition = storyAreaPosition;
-    export type StoryAreaType = storyAreaTypeLocation | storyAreaTypeVenue | storyAreaTypeSuggestedReaction | storyAreaTypeMessage;
+    export type StoryAreaType = storyAreaTypeLocation | storyAreaTypeVenue | storyAreaTypeSuggestedReaction | storyAreaTypeMessage | storyAreaTypeLink;
     export type StoryArea = storyArea;
-    export type InputStoryAreaType = inputStoryAreaTypeLocation | inputStoryAreaTypeFoundVenue | inputStoryAreaTypePreviousVenue | inputStoryAreaTypeSuggestedReaction | inputStoryAreaTypeMessage;
+    export type InputStoryAreaType = inputStoryAreaTypeLocation | inputStoryAreaTypeFoundVenue | inputStoryAreaTypePreviousVenue | inputStoryAreaTypeSuggestedReaction | inputStoryAreaTypeMessage | inputStoryAreaTypeLink;
     export type InputStoryArea = inputStoryArea;
     export type InputStoryAreas = inputStoryAreas;
     export type StoryVideo = storyVideo;
@@ -15638,6 +16147,7 @@ namespace TdApi {
     export type StoryInteractionInfo = storyInteractionInfo;
     export type Story = story;
     export type Stories = stories;
+    export type FoundStories = foundStories;
     export type StoryFullId = storyFullId;
     export type StoryInfo = storyInfo;
     export type ChatActiveStories = chatActiveStories;
@@ -15658,6 +16168,7 @@ namespace TdApi {
     export type FoundChatBoosts = foundChatBoosts;
     export type ChatBoostSlot = chatBoostSlot;
     export type ChatBoostSlots = chatBoostSlots;
+    export type ResendCodeReason = resendCodeReasonUserRequest | resendCodeReasonVerificationFailed;
     export type CallDiscardReason = callDiscardReasonEmpty | callDiscardReasonMissed | callDiscardReasonDeclined | callDiscardReasonDisconnected | callDiscardReasonHungUp;
     export type CallProtocol = callProtocol;
     export type CallServerType = callServerTypeTelegramReflector | callServerTypeWebrtc;
@@ -15725,8 +16236,8 @@ namespace TdApi {
     export type PremiumFeaturePromotionAnimation = premiumFeaturePromotionAnimation;
     export type BusinessFeaturePromotionAnimation = businessFeaturePromotionAnimation;
     export type PremiumState = premiumState;
-    export type StorePaymentPurpose = storePaymentPurposePremiumSubscription | storePaymentPurposeGiftedPremium | storePaymentPurposePremiumGiftCodes | storePaymentPurposePremiumGiveaway;
-    export type TelegramPaymentPurpose = telegramPaymentPurposePremiumGiftCodes | telegramPaymentPurposePremiumGiveaway;
+    export type StorePaymentPurpose = storePaymentPurposePremiumSubscription | storePaymentPurposeGiftedPremium | storePaymentPurposePremiumGiftCodes | storePaymentPurposePremiumGiveaway | storePaymentPurposeStars;
+    export type TelegramPaymentPurpose = telegramPaymentPurposePremiumGiftCodes | telegramPaymentPurposePremiumGiveaway | telegramPaymentPurposeStars;
     export type DeviceToken = deviceTokenFirebaseCloudMessaging | deviceTokenApplePush | deviceTokenApplePushVoIP | deviceTokenWindowsPush | deviceTokenMicrosoftPush | deviceTokenMicrosoftPushVoIP | deviceTokenWebPush | deviceTokenSimplePush | deviceTokenUbuntuPush | deviceTokenBlackBerryPush | deviceTokenTizenPush | deviceTokenHuaweiPush;
     export type PushReceiverId = pushReceiverId;
     export type BackgroundFill = backgroundFillSolid | backgroundFillGradient | backgroundFillFreeformGradient;
@@ -15799,7 +16310,7 @@ namespace TdApi {
     export type TMeUrlType = tMeUrlTypeUser | tMeUrlTypeSupergroup | tMeUrlTypeChatInvite | tMeUrlTypeStickerSet;
     export type TMeUrl = tMeUrl;
     export type TMeUrls = tMeUrls;
-    export type SuggestedAction = suggestedActionEnableArchiveAndMuteNewChats | suggestedActionCheckPassword | suggestedActionCheckPhoneNumber | suggestedActionViewChecksHint | suggestedActionConvertToBroadcastGroup | suggestedActionSetPassword | suggestedActionUpgradePremium | suggestedActionRestorePremium | suggestedActionSubscribeToAnnualPremium | suggestedActionGiftPremiumForChristmas | suggestedActionSetBirthdate;
+    export type SuggestedAction = suggestedActionEnableArchiveAndMuteNewChats | suggestedActionCheckPassword | suggestedActionCheckPhoneNumber | suggestedActionViewChecksHint | suggestedActionConvertToBroadcastGroup | suggestedActionSetPassword | suggestedActionUpgradePremium | suggestedActionRestorePremium | suggestedActionSubscribeToAnnualPremium | suggestedActionGiftPremiumForChristmas | suggestedActionSetBirthdate | suggestedActionExtendPremium;
     export type Count = count;
     export type Text = text;
     export type Seconds = seconds;
@@ -15819,18 +16330,21 @@ namespace TdApi {
     export type ChatStatisticsAdministratorActionsInfo = chatStatisticsAdministratorActionsInfo;
     export type ChatStatisticsInviterInfo = chatStatisticsInviterInfo;
     export type ChatStatistics = chatStatisticsSupergroup | chatStatisticsChannel;
+    export type ChatRevenueAmount = chatRevenueAmount;
     export type ChatRevenueStatistics = chatRevenueStatistics;
     export type MessageStatistics = messageStatistics;
     export type StoryStatistics = storyStatistics;
-    export type ChatRevenueWithdrawalState = chatRevenueWithdrawalStatePending | chatRevenueWithdrawalStateCompleted | chatRevenueWithdrawalStateFailed;
+    export type RevenueWithdrawalState = revenueWithdrawalStatePending | revenueWithdrawalStateSucceeded | revenueWithdrawalStateFailed;
     export type ChatRevenueTransactionType = chatRevenueTransactionTypeEarnings | chatRevenueTransactionTypeWithdrawal | chatRevenueTransactionTypeRefund;
     export type ChatRevenueTransaction = chatRevenueTransaction;
     export type ChatRevenueTransactions = chatRevenueTransactions;
+    export type StarRevenueStatus = starRevenueStatus;
+    export type StarRevenueStatistics = starRevenueStatistics;
     export type Point = point;
     export type VectorPathCommand = vectorPathCommandLine | vectorPathCommandCubicBezierCurve;
     export type BotCommandScope = botCommandScopeDefault | botCommandScopeAllPrivateChats | botCommandScopeAllGroupChats | botCommandScopeAllChatAdministrators | botCommandScopeChat | botCommandScopeChatAdministrators | botCommandScopeChatMember;
     export type PhoneNumberCodeType = phoneNumberCodeTypeChange | phoneNumberCodeTypeVerify | phoneNumberCodeTypeConfirmOwnership;
-    export type Update = updateAuthorizationState | updateNewMessage | updateMessageSendAcknowledged | updateMessageSendSucceeded | updateMessageSendFailed | updateMessageContent | updateMessageEdited | updateMessageIsPinned | updateMessageInteractionInfo | updateMessageContentOpened | updateMessageMentionRead | updateMessageUnreadReactions | updateMessageLiveLocationViewed | updateNewChat | updateChatTitle | updateChatPhoto | updateChatAccentColors | updateChatPermissions | updateChatLastMessage | updateChatPosition | updateChatAddedToList | updateChatRemovedFromList | updateChatReadInbox | updateChatReadOutbox | updateChatActionBar | updateChatBusinessBotManageBar | updateChatAvailableReactions | updateChatDraftMessage | updateChatEmojiStatus | updateChatMessageSender | updateChatMessageAutoDeleteTime | updateChatNotificationSettings | updateChatPendingJoinRequests | updateChatReplyMarkup | updateChatBackground | updateChatTheme | updateChatUnreadMentionCount | updateChatUnreadReactionCount | updateChatVideoChat | updateChatDefaultDisableNotification | updateChatHasProtectedContent | updateChatIsTranslatable | updateChatIsMarkedAsUnread | updateChatViewAsTopics | updateChatBlockList | updateChatHasScheduledMessages | updateChatFolders | updateChatOnlineMemberCount | updateSavedMessagesTopic | updateSavedMessagesTopicCount | updateQuickReplyShortcut | updateQuickReplyShortcutDeleted | updateQuickReplyShortcuts | updateQuickReplyShortcutMessages | updateForumTopicInfo | updateScopeNotificationSettings | updateNotification | updateNotificationGroup | updateActiveNotifications | updateHavePendingNotifications | updateDeleteMessages | updateChatAction | updateUserStatus | updateUser | updateBasicGroup | updateSupergroup | updateSecretChat | updateUserFullInfo | updateBasicGroupFullInfo | updateSupergroupFullInfo | updateServiceNotification | updateFile | updateFileGenerationStart | updateFileGenerationStop | updateFileDownloads | updateFileAddedToDownloads | updateFileDownload | updateFileRemovedFromDownloads | updateCall | updateGroupCall | updateGroupCallParticipant | updateNewCallSignalingData | updateUserPrivacySettingRules | updateUnreadMessageCount | updateUnreadChatCount | updateStory | updateStoryDeleted | updateStorySendSucceeded | updateStorySendFailed | updateChatActiveStories | updateStoryListChatCount | updateStoryStealthMode | updateOption | updateStickerSet | updateInstalledStickerSets | updateTrendingStickerSets | updateRecentStickers | updateFavoriteStickers | updateSavedAnimations | updateSavedNotificationSounds | updateDefaultBackground | updateChatThemes | updateAccentColors | updateProfileAccentColors | updateLanguagePackStrings | updateConnectionState | updateTermsOfService | updateUsersNearby | updateUnconfirmedSession | updateAttachmentMenuBots | updateWebAppMessageSent | updateActiveEmojiReactions | updateDefaultReactionType | updateSavedMessagesTags | updateSpeechRecognitionTrial | updateDiceEmojis | updateAnimatedEmojiMessageClicked | updateAnimationSearchParameters | updateSuggestedActions | updateSpeedLimitNotification | updateContactCloseBirthdays | updateAutosaveSettings | updateBusinessConnection | updateNewBusinessMessage | updateBusinessMessageEdited | updateBusinessMessagesDeleted | updateNewInlineQuery | updateNewChosenInlineResult | updateNewCallbackQuery | updateNewInlineCallbackQuery | updateNewShippingQuery | updateNewPreCheckoutQuery | updateNewCustomEvent | updateNewCustomQuery | updatePoll | updatePollAnswer | updateChatMember | updateNewChatJoinRequest | updateChatBoost | updateMessageReaction | updateMessageReactions | updateFatalError;
+    export type Update = updateAuthorizationState | updateNewMessage | updateMessageSendAcknowledged | updateMessageSendSucceeded | updateMessageSendFailed | updateMessageContent | updateMessageEdited | updateMessageIsPinned | updateMessageInteractionInfo | updateMessageContentOpened | updateMessageMentionRead | updateMessageUnreadReactions | updateMessageFactCheck | updateMessageLiveLocationViewed | updateNewChat | updateChatTitle | updateChatPhoto | updateChatAccentColors | updateChatPermissions | updateChatLastMessage | updateChatPosition | updateChatAddedToList | updateChatRemovedFromList | updateChatReadInbox | updateChatReadOutbox | updateChatActionBar | updateChatBusinessBotManageBar | updateChatAvailableReactions | updateChatDraftMessage | updateChatEmojiStatus | updateChatMessageSender | updateChatMessageAutoDeleteTime | updateChatNotificationSettings | updateChatPendingJoinRequests | updateChatReplyMarkup | updateChatBackground | updateChatTheme | updateChatUnreadMentionCount | updateChatUnreadReactionCount | updateChatVideoChat | updateChatDefaultDisableNotification | updateChatHasProtectedContent | updateChatIsTranslatable | updateChatIsMarkedAsUnread | updateChatViewAsTopics | updateChatBlockList | updateChatHasScheduledMessages | updateChatFolders | updateChatOnlineMemberCount | updateSavedMessagesTopic | updateSavedMessagesTopicCount | updateQuickReplyShortcut | updateQuickReplyShortcutDeleted | updateQuickReplyShortcuts | updateQuickReplyShortcutMessages | updateForumTopicInfo | updateScopeNotificationSettings | updateReactionNotificationSettings | updateNotification | updateNotificationGroup | updateActiveNotifications | updateHavePendingNotifications | updateDeleteMessages | updateChatAction | updateUserStatus | updateUser | updateBasicGroup | updateSupergroup | updateSecretChat | updateUserFullInfo | updateBasicGroupFullInfo | updateSupergroupFullInfo | updateServiceNotification | updateFile | updateFileGenerationStart | updateFileGenerationStop | updateFileDownloads | updateFileAddedToDownloads | updateFileDownload | updateFileRemovedFromDownloads | updateApplicationVerificationRequired | updateCall | updateGroupCall | updateGroupCallParticipant | updateNewCallSignalingData | updateUserPrivacySettingRules | updateUnreadMessageCount | updateUnreadChatCount | updateStory | updateStoryDeleted | updateStorySendSucceeded | updateStorySendFailed | updateChatActiveStories | updateStoryListChatCount | updateStoryStealthMode | updateOption | updateStickerSet | updateInstalledStickerSets | updateTrendingStickerSets | updateRecentStickers | updateFavoriteStickers | updateSavedAnimations | updateSavedNotificationSounds | updateDefaultBackground | updateChatThemes | updateAccentColors | updateProfileAccentColors | updateLanguagePackStrings | updateConnectionState | updateTermsOfService | updateUsersNearby | updateUnconfirmedSession | updateAttachmentMenuBots | updateWebAppMessageSent | updateActiveEmojiReactions | updateAvailableMessageEffects | updateDefaultReactionType | updateSavedMessagesTags | updateOwnedStarCount | updateChatRevenueAmount | updateStarRevenueStatus | updateSpeechRecognitionTrial | updateDiceEmojis | updateAnimatedEmojiMessageClicked | updateAnimationSearchParameters | updateSuggestedActions | updateSpeedLimitNotification | updateContactCloseBirthdays | updateAutosaveSettings | updateBusinessConnection | updateNewBusinessMessage | updateBusinessMessageEdited | updateBusinessMessagesDeleted | updateNewInlineQuery | updateNewChosenInlineResult | updateNewCallbackQuery | updateNewInlineCallbackQuery | updateNewBusinessCallbackQuery | updateNewShippingQuery | updateNewPreCheckoutQuery | updateNewCustomEvent | updateNewCustomQuery | updatePoll | updatePollAnswer | updateChatMember | updateNewChatJoinRequest | updateChatBoost | updateMessageReaction | updateMessageReactions | updateFatalError;
     export type Updates = updates;
     export type LogStream = logStreamDefault | logStreamFile | logStreamEmpty;
     export type LogVerbosityLevel = logVerbosityLevel;
@@ -15844,7 +16358,7 @@ namespace TdApi {
     export type TestVectorString = testVectorString;
     export type TestVectorStringObject = testVectorStringObject;
 
-    export type TdClass = Error | Ok | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | EmailAddressAuthentication | EmailAddressResetState | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerFormat | StickerType | StickerFullType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | WebApp | Poll | Background | Backgrounds | ChatBackground | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | Birthdate | CloseBirthdayUser | BusinessAwayMessageSchedule | BusinessLocation | BusinessRecipients | BusinessAwayMessageSettings | BusinessGreetingMessageSettings | BusinessConnectedBot | BusinessStartPage | InputBusinessStartPage | BusinessOpeningHoursInterval | BusinessOpeningHours | BusinessInfo | BusinessChatLink | BusinessChatLinks | InputBusinessChatLink | BusinessChatLinkInfo | ChatPhotoStickerType | ChatPhotoSticker | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | PremiumPaymentOption | PremiumStatePaymentOption | PremiumGiftCodePaymentOption | PremiumGiftCodePaymentOptions | PremiumGiftCodeInfo | PremiumGiveawayParticipantStatus | PremiumGiveawayInfo | AccentColor | ProfileAccentColors | ProfileAccentColor | EmojiStatus | EmojiStatuses | Usernames | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | InviteLinkChatType | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | ChatMessageSender | ChatMessageSenders | MessageReadDate | MessageViewer | MessageViewers | MessageOrigin | ForwardSource | ReactionType | MessageForwardInfo | MessageImportInfo | MessageReplyInfo | MessageReaction | MessageReactions | MessageInteractionInfo | UnreadReaction | MessageSendingState | TextQuote | InputTextQuote | MessageReplyTo | InputMessageReplyTo | Message | Messages | FoundMessages | FoundChatMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | BusinessMessage | BusinessMessages | MessageSource | MessageSponsorType | MessageSponsor | SponsoredMessage | SponsoredMessages | ReportChatSponsoredMessageOption | ReportChatSponsoredMessageResult | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | DraftMessage | ChatType | ChatFolderIcon | ChatFolder | ChatFolderInfo | ChatFolderInviteLink | ChatFolderInviteLinks | ChatFolderInviteLinkInfo | RecommendedChatFolder | RecommendedChatFolders | ArchiveChatListSettings | ChatList | ChatLists | ChatSource | ChatPosition | ChatAvailableReactions | SavedMessagesTag | SavedMessagesTags | BusinessBotManageBar | VideoChat | Chat | Chats | FailedToAddMember | FailedToAddMembers | CreatedBasicGroupChat | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | FoundWebApp | WebAppInfo | MessageThreadInfo | SavedMessagesTopicType | SavedMessagesTopic | ForumTopicIcon | ForumTopicInfo | ForumTopic | ForumTopics | LinkPreviewOptions | SharedUser | SharedChat | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | CollectibleItemType | CollectibleItemInfo | BankCardActionOpenUrl | BankCardInfo | Address | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentOption | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceipt | InputInvoice | MessageExtendedMedia | PremiumGiveawayParameters | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSelfDestructType | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | EmojiKeyword | EmojiKeywords | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | EmojiCategory | EmojiCategories | EmojiCategoryType | StoryAreaPosition | StoryAreaType | StoryArea | InputStoryAreaType | InputStoryArea | InputStoryAreas | StoryVideo | StoryContent | InputStoryContent | StoryList | StoryOrigin | StoryRepostInfo | StoryInteractionInfo | Story | Stories | StoryFullId | StoryInfo | ChatActiveStories | StoryInteractionType | StoryInteraction | StoryInteractions | QuickReplyMessage | QuickReplyMessages | QuickReplyShortcut | PublicForward | PublicForwards | ChatBoostLevelFeatures | ChatBoostFeatures | ChatBoostSource | PrepaidPremiumGiveaway | ChatBoostStatus | ChatBoost | FoundChatBoosts | ChatBoostSlot | ChatBoostSlots | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | FirebaseAuthenticationSettings | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | EmojiReaction | ReactionUnavailabilityReason | Animations | DiceStickers | ImportedContacts | SpeechRecognitionResult | BusinessConnection | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | BotWriteAccessAllowReason | HttpUrl | UserLink | InputInlineQueryResult | InlineQueryResult | InlineQueryResultsButtonType | InlineQueryResultsButton | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | BusinessFeature | PremiumStoryFeature | PremiumLimit | PremiumFeatures | BusinessFeatures | PremiumSource | PremiumFeaturePromotionAnimation | BusinessFeaturePromotionAnimation | PremiumState | StorePaymentPurpose | TelegramPaymentPurpose | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | InputBackground | ThemeSettings | ChatTheme | TimeZone | TimeZones | Hashtags | CanSendStoryResult | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | StoryPrivacySettings | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | ReadDatePrivacySettings | NewChatPrivacySettings | CanSendMessageToUserResult | AccountTtl | MessageAutoDeleteTime | SessionType | Session | Sessions | UnconfirmedSession | ConnectedWebsite | ConnectedWebsites | ReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | ChatBoostLink | ChatBoostLinkInfo | BlockList | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | AutosaveSettingsScope | ScopeAutosaveSettings | AutosaveSettingsException | AutosaveSettings | ConnectionState | TopChatCategory | FoundPosition | FoundPositions | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsObjectType | ChatStatisticsInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | ChatRevenueStatistics | MessageStatistics | StoryStatistics | ChatRevenueWithdrawalState | ChatRevenueTransactionType | ChatRevenueTransaction | ChatRevenueTransactions | Point | VectorPathCommand | BotCommandScope | PhoneNumberCodeType | Update | Updates | LogStream | LogVerbosityLevel | LogTags | UserSupportInfo | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
+    export type TdClass = Error | Ok | AuthenticationCodeType | AuthenticationCodeInfo | EmailAddressAuthenticationCodeInfo | EmailAddressAuthentication | EmailAddressResetState | TextEntity | TextEntities | FormattedText | TermsOfService | AuthorizationState | PasswordState | RecoveryEmailAddress | TemporaryPasswordState | LocalFile | RemoteFile | File | InputFile | PhotoSize | Minithumbnail | ThumbnailFormat | Thumbnail | MaskPoint | MaskPosition | StickerFormat | StickerType | StickerFullType | ClosedVectorPath | PollOption | PollType | Animation | Audio | Document | Photo | Sticker | Video | VideoNote | VoiceNote | AnimatedEmoji | Contact | Location | Venue | Game | WebApp | Poll | Background | Backgrounds | ChatBackground | ProfilePhoto | ChatPhotoInfo | UserType | BotCommand | BotCommands | BotMenuButton | ChatLocation | Birthdate | CloseBirthdayUser | BusinessAwayMessageSchedule | BusinessLocation | BusinessRecipients | BusinessAwayMessageSettings | BusinessGreetingMessageSettings | BusinessConnectedBot | BusinessStartPage | InputBusinessStartPage | BusinessOpeningHoursInterval | BusinessOpeningHours | BusinessInfo | BusinessChatLink | BusinessChatLinks | InputBusinessChatLink | BusinessChatLinkInfo | ChatPhotoStickerType | ChatPhotoSticker | AnimatedChatPhoto | ChatPhoto | ChatPhotos | InputChatPhoto | ChatPermissions | ChatAdministratorRights | ProductInfo | PremiumPaymentOption | PremiumStatePaymentOption | PremiumGiftCodePaymentOption | PremiumGiftCodePaymentOptions | PremiumGiftCodeInfo | StarPaymentOption | StarPaymentOptions | StarTransactionDirection | StarTransactionPartner | StarTransaction | StarTransactions | PremiumGiveawayParticipantStatus | PremiumGiveawayInfo | AccentColor | ProfileAccentColors | ProfileAccentColor | EmojiStatus | EmojiStatuses | Usernames | User | BotInfo | UserFullInfo | Users | ChatAdministrator | ChatAdministrators | ChatMemberStatus | ChatMember | ChatMembers | ChatMembersFilter | SupergroupMembersFilter | ChatInviteLink | ChatInviteLinks | ChatInviteLinkCount | ChatInviteLinkCounts | ChatInviteLinkMember | ChatInviteLinkMembers | InviteLinkChatType | ChatInviteLinkInfo | ChatJoinRequest | ChatJoinRequests | ChatJoinRequestsInfo | BasicGroup | BasicGroupFullInfo | Supergroup | SupergroupFullInfo | SecretChatState | SecretChat | MessageSender | MessageSenders | ChatMessageSender | ChatMessageSenders | MessageReadDate | MessageViewer | MessageViewers | MessageOrigin | ForwardSource | ReactionType | MessageForwardInfo | MessageImportInfo | MessageReplyInfo | MessageReaction | MessageReactions | MessageInteractionInfo | UnreadReaction | MessageEffectType | MessageEffect | MessageSendingState | TextQuote | InputTextQuote | MessageReplyTo | InputMessageReplyTo | FactCheck | Message | Messages | FoundMessages | FoundChatMessages | MessagePosition | MessagePositions | MessageCalendarDay | MessageCalendar | BusinessMessage | BusinessMessages | MessageSource | MessageSponsor | SponsoredMessage | SponsoredMessages | ReportChatSponsoredMessageOption | ReportChatSponsoredMessageResult | FileDownload | DownloadedFileCounts | FoundFileDownloads | NotificationSettingsScope | ChatNotificationSettings | ScopeNotificationSettings | ReactionNotificationSource | ReactionNotificationSettings | DraftMessage | ChatType | ChatFolderIcon | ChatFolder | ChatFolderInfo | ChatFolderInviteLink | ChatFolderInviteLinks | ChatFolderInviteLinkInfo | RecommendedChatFolder | RecommendedChatFolders | ArchiveChatListSettings | ChatList | ChatLists | ChatSource | ChatPosition | ChatAvailableReactions | SavedMessagesTag | SavedMessagesTags | BusinessBotManageBar | VideoChat | Chat | Chats | FailedToAddMember | FailedToAddMembers | CreatedBasicGroupChat | ChatNearby | ChatsNearby | PublicChatType | ChatActionBar | KeyboardButtonType | KeyboardButton | InlineKeyboardButtonType | InlineKeyboardButton | ReplyMarkup | LoginUrlInfo | FoundWebApp | WebAppInfo | MessageThreadInfo | SavedMessagesTopicType | SavedMessagesTopic | ForumTopicIcon | ForumTopicInfo | ForumTopic | ForumTopics | LinkPreviewOptions | SharedUser | SharedChat | RichText | PageBlockCaption | PageBlockListItem | PageBlockHorizontalAlignment | PageBlockVerticalAlignment | PageBlockTableCell | PageBlockRelatedArticle | PageBlock | WebPageInstantView | WebPage | CountryInfo | Countries | PhoneNumberInfo | CollectibleItemType | CollectibleItemInfo | BankCardActionOpenUrl | BankCardInfo | Address | LocationAddress | ThemeParameters | LabeledPricePart | Invoice | OrderInfo | ShippingOption | SavedCredentials | InputCredentials | PaymentProvider | PaymentOption | PaymentFormType | PaymentForm | ValidatedOrderInfo | PaymentResult | PaymentReceiptType | PaymentReceipt | InputInvoice | MessageExtendedMedia | PremiumGiveawayParameters | DatedFile | PassportElementType | Date | PersonalDetails | IdentityDocument | InputIdentityDocument | PersonalDocument | InputPersonalDocument | PassportElement | InputPassportElement | PassportElements | PassportElementErrorSource | PassportElementError | PassportSuitableElement | PassportRequiredElement | PassportAuthorizationForm | PassportElementsWithErrors | EncryptedCredentials | EncryptedPassportElement | InputPassportElementErrorSource | InputPassportElementError | MessageContent | TextEntityType | InputThumbnail | MessageSchedulingState | MessageSelfDestructType | MessageSendOptions | MessageCopyOptions | InputMessageContent | SearchMessagesFilter | ChatAction | UserStatus | EmojiKeyword | EmojiKeywords | Stickers | Emojis | StickerSet | StickerSetInfo | StickerSets | TrendingStickerSets | EmojiCategorySource | EmojiCategory | EmojiCategories | EmojiCategoryType | StoryAreaPosition | StoryAreaType | StoryArea | InputStoryAreaType | InputStoryArea | InputStoryAreas | StoryVideo | StoryContent | InputStoryContent | StoryList | StoryOrigin | StoryRepostInfo | StoryInteractionInfo | Story | Stories | FoundStories | StoryFullId | StoryInfo | ChatActiveStories | StoryInteractionType | StoryInteraction | StoryInteractions | QuickReplyMessage | QuickReplyMessages | QuickReplyShortcut | PublicForward | PublicForwards | ChatBoostLevelFeatures | ChatBoostFeatures | ChatBoostSource | PrepaidPremiumGiveaway | ChatBoostStatus | ChatBoost | FoundChatBoosts | ChatBoostSlot | ChatBoostSlots | ResendCodeReason | CallDiscardReason | CallProtocol | CallServerType | CallServer | CallId | GroupCallId | CallState | GroupCallVideoQuality | GroupCallStream | GroupCallStreams | RtmpUrl | GroupCallRecentSpeaker | GroupCall | GroupCallVideoSourceGroup | GroupCallParticipantVideoInfo | GroupCallParticipant | CallProblem | Call | FirebaseAuthenticationSettings | PhoneNumberAuthenticationSettings | AddedReaction | AddedReactions | AvailableReaction | AvailableReactions | EmojiReaction | ReactionUnavailabilityReason | Animations | DiceStickers | ImportedContacts | SpeechRecognitionResult | BusinessConnection | AttachmentMenuBotColor | AttachmentMenuBot | SentWebAppMessage | BotWriteAccessAllowReason | HttpUrl | UserLink | InputInlineQueryResult | InlineQueryResult | InlineQueryResultsButtonType | InlineQueryResultsButton | InlineQueryResults | CallbackQueryPayload | CallbackQueryAnswer | CustomRequestResult | GameHighScore | GameHighScores | ChatEventAction | ChatEvent | ChatEvents | ChatEventLogFilters | LanguagePackStringValue | LanguagePackString | LanguagePackStrings | LanguagePackInfo | LocalizationTargetInfo | PremiumLimitType | PremiumFeature | BusinessFeature | PremiumStoryFeature | PremiumLimit | PremiumFeatures | BusinessFeatures | PremiumSource | PremiumFeaturePromotionAnimation | BusinessFeaturePromotionAnimation | PremiumState | StorePaymentPurpose | TelegramPaymentPurpose | DeviceToken | PushReceiverId | BackgroundFill | BackgroundType | InputBackground | ThemeSettings | ChatTheme | TimeZone | TimeZones | Hashtags | CanSendStoryResult | CanTransferOwnershipResult | CheckChatUsernameResult | CheckStickerSetNameResult | ResetPasswordResult | MessageFileType | PushMessageContent | NotificationType | NotificationGroupType | NotificationSound | NotificationSounds | Notification | NotificationGroup | OptionValue | JsonObjectMember | JsonValue | StoryPrivacySettings | UserPrivacySettingRule | UserPrivacySettingRules | UserPrivacySetting | ReadDatePrivacySettings | NewChatPrivacySettings | CanSendMessageToUserResult | AccountTtl | MessageAutoDeleteTime | SessionType | Session | Sessions | UnconfirmedSession | ConnectedWebsite | ConnectedWebsites | ReportReason | TargetChat | InternalLinkType | MessageLink | MessageLinkInfo | ChatBoostLink | ChatBoostLinkInfo | BlockList | FilePart | FileType | StorageStatisticsByFileType | StorageStatisticsByChat | StorageStatistics | StorageStatisticsFast | DatabaseStatistics | NetworkType | NetworkStatisticsEntry | NetworkStatistics | AutoDownloadSettings | AutoDownloadSettingsPresets | AutosaveSettingsScope | ScopeAutosaveSettings | AutosaveSettingsException | AutosaveSettings | ConnectionState | TopChatCategory | FoundPosition | FoundPositions | TMeUrlType | TMeUrl | TMeUrls | SuggestedAction | Count | Text | Seconds | FileDownloadedPrefixSize | DeepLinkInfo | TextParseMode | ProxyType | Proxy | Proxies | InputSticker | DateRange | StatisticalValue | StatisticalGraph | ChatStatisticsObjectType | ChatStatisticsInteractionInfo | ChatStatisticsMessageSenderInfo | ChatStatisticsAdministratorActionsInfo | ChatStatisticsInviterInfo | ChatStatistics | ChatRevenueAmount | ChatRevenueStatistics | MessageStatistics | StoryStatistics | RevenueWithdrawalState | ChatRevenueTransactionType | ChatRevenueTransaction | ChatRevenueTransactions | StarRevenueStatus | StarRevenueStatistics | Point | VectorPathCommand | BotCommandScope | PhoneNumberCodeType | Update | Updates | LogStream | LogVerbosityLevel | LogTags | UserSupportInfo | TestInt | TestString | TestBytes | TestVectorInt | TestVectorIntObject | TestVectorString | TestVectorStringObject;
     
     
     /** Returns the current authorization state; this is an offline request. For informational purposes only. Use updateAuthorizationState instead to maintain the current authorization state. Can be called before initialization */
@@ -15905,9 +16419,11 @@ namespace TdApi {
     }
     
     
-    /** Resends an authentication code to the user. Works only when the current authorization state is authorizationStateWaitCode, the next_code_type of the result is not null and the server-specified timeout has passed, -or when the current authorization state is authorizationStateWaitEmailCode */
+    /** Resends an authentication code to the user. Works only when the current authorization state is authorizationStateWaitCode, the next_code_type of the result is not null -and the server-specified timeout has passed, or when the current authorization state is authorizationStateWaitEmailCode */
     export interface resendAuthenticationCode {
         '@type': 'resendAuthenticationCode';
+        /** Reason of code resending; pass null if unknown */
+        reason?: ResendCodeReason;
     }
     
     
@@ -15990,8 +16506,16 @@ namespace TdApi {
     /** Sends Firebase Authentication SMS to the phone number of the user. Works only when the current authorization state is authorizationStateWaitCode and the server returned code of the type authenticationCodeTypeFirebaseAndroid or authenticationCodeTypeFirebaseIos */
     export interface sendAuthenticationFirebaseSms {
         '@type': 'sendAuthenticationFirebaseSms';
-        /** SafetyNet Attestation API token for the Android application, or secret from push notification for the iOS application */
+        /** Play Integrity API or SafetyNet Attestation API token for the Android application, or secret from push notification for the iOS application */
         token?: string;
+    }
+    
+    
+    /** Reports that authentication code wasn't delivered via SMS; for official mobile applications only. Works only when the current authorization state is authorizationStateWaitCode */
+    export interface reportAuthenticationCodeMissing {
+        '@type': 'reportAuthenticationCodeMissing';
+        /** Current mobile network code */
+        mobile_network_code?: string;
     }
     
     
@@ -16421,6 +16945,12 @@ namespace TdApi {
     }
     
     
+    /** Returns a list of channel chats recommended to the current user */
+    export interface getRecommendedChats {
+        '@type': 'getRecommendedChats';
+    }
+    
+    
     /** Returns a list of chats similar to the given chat */
     export interface getChatSimilarChats {
         '@type': 'getChatSimilarChats';
@@ -16716,6 +17246,8 @@ namespace TdApi {
         '@type': 'searchMessages';
         /** Chat list in which to search messages; pass null to search in all chats regardless of their chat list. Only Main and Archive chat lists are supported */
         chat_list?: ChatList;
+        /** Pass true to search only for messages in channels */
+        only_in_channels?: Bool;
         /** Query to search for */
         query?: string;
         /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
@@ -16784,6 +17316,82 @@ namespace TdApi {
         query?: string;
         /** The maximum number of messages to be returned; up to 100 */
         limit?: int32;
+    }
+    
+    
+    /** Searches for public channel posts containing the given hashtag or cashtag. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit */
+    export interface searchPublicMessagesByTag {
+        '@type': 'searchPublicMessagesByTag';
+        /** Hashtag or cashtag to search for */
+        tag?: string;
+        /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of messages to be returned; up to 100. For optimal performance, the number of returned messages is chosen by TDLib and can be smaller than the specified limit */
+        limit?: int32;
+    }
+    
+    
+    /** Searches for public stories containing the given hashtag or cashtag. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+    export interface searchPublicStoriesByTag {
+        '@type': 'searchPublicStoriesByTag';
+        /** Hashtag or cashtag to search for */
+        tag?: string;
+        /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of stories to be returned; up to 100. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+        limit?: int32;
+    }
+    
+    
+    /** Searches for public stories by the given address location. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+    export interface searchPublicStoriesByLocation {
+        '@type': 'searchPublicStoriesByLocation';
+        /** Address of the location */
+        address?: locationAddress;
+        /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of stories to be returned; up to 100. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+        limit?: int32;
+    }
+    
+    
+    /** Searches for public stories from the given venue. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+    export interface searchPublicStoriesByVenue {
+        '@type': 'searchPublicStoriesByVenue';
+        /** Provider of the venue */
+        venue_provider?: string;
+        /** Identifier of the venue in the provider database */
+        venue_id?: string;
+        /** Offset of the first entry to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of stories to be returned; up to 100. For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
+        limit?: int32;
+    }
+    
+    
+    /** Returns recently searched for hashtags or cashtags by their prefix */
+    export interface getSearchedForTags {
+        '@type': 'getSearchedForTags';
+        /** Prefix of hashtags or cashtags to return */
+        tag_prefix?: string;
+        /** The maximum number of items to be returned */
+        limit?: int32;
+    }
+    
+    
+    /** Removes a hashtag or a cashtag from the list of recently searched for hashtags or cashtags */
+    export interface removeSearchedForTag {
+        '@type': 'removeSearchedForTag';
+        /** Hashtag or cashtag to delete */
+        tag?: string;
+    }
+    
+    
+    /** Clears the list of recently searched for hashtags or cashtags */
+    export interface clearSearchedForTags {
+        '@type': 'clearSearchedForTags';
+        /** Pass true to clear the list of recently searched for cashtags; otherwise, the list of recently searched for hashtags will be cleared */
+        clear_cashtags?: Bool;
     }
     
     
@@ -17019,7 +17627,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of message sender identifiers, which can be used to send messages in a chat */
+    /** Returns the list of message sender identifiers, which can be used to send messages in a chat */
     export interface getChatAvailableMessageSenders {
         '@type': 'getChatAvailableMessageSenders';
         /** Chat identifier */
@@ -17066,7 +17674,7 @@ namespace TdApi {
         reply_to?: InputMessageReplyTo;
         /** Options to be used to send the messages; pass null to use default options */
         options?: messageSendOptions;
-        /** Contents of messages to be sent. At most 10 messages can be added to an album */
+        /** Contents of messages to be sent. At most 10 messages can be added to an album. All messages must have the same value of show_caption_above_media */
         input_message_contents?: vector<InputMessageContent>;
     }
     
@@ -17199,7 +17807,7 @@ namespace TdApi {
     }
     
     
-    /** Edits the text of a message (or a text of a game message). Returns the edited message after the edit is completed on the server side */
+    /** Edits the text of a message (or a text of a game message). Returns the edited message after the edit is completed on the server side. -Can be used only if message.can_be_edited == true */
     export interface editMessageText {
         '@type': 'editMessageText';
         /** The chat the message belongs to */
@@ -17213,7 +17821,7 @@ namespace TdApi {
     }
     
     
-    /** Edits the message content of a live location. Messages can be edited for a limited period of time specified in the live location. Returns the edited message after the edit is completed on the server side */
+    /** Edits the message content of a live location. Messages can be edited for a limited period of time specified in the live location. -Returns the edited message after the edit is completed on the server side. Can be used only if message.can_be_edited == true */
     export interface editMessageLiveLocation {
         '@type': 'editMessageLiveLocation';
         /** The chat the message belongs to */
@@ -17224,6 +17832,8 @@ namespace TdApi {
         reply_markup?: ReplyMarkup;
         /** New location content of the message; pass null to stop sharing the live location */
         location?: location;
+        /** New time relative to the message send date, for which the location can be updated, in seconds. If 0x7FFFFFFF specified, then the location can be updated forever. -Otherwise, must not exceed the current live_period by more than a day, and the live location expiration date must remain in the next 90 days. Pass 0 to keep the current live_period */
+        live_period?: int32;
         /** The new direction in which the location moves, in degrees; 1-360. Pass 0 if unknown */
         heading?: int32;
         /** The new maximum distance for proximity alerts, in meters (0-100000). Pass 0 if the notification is disabled */
@@ -17231,7 +17841,7 @@ namespace TdApi {
     }
     
     
-    /** Edits the content of a message with an animation, an audio, a document, a photo or a video, including message caption. If only the caption needs to be edited, use editMessageCaption instead. -The media can't be edited if the message was set to self-destruct or to a self-destructing media. The type of message content in an album can't be changed with exception of replacing a photo with a video or vice versa. Returns the edited message after the edit is completed on the server side */
+    /** Edits the content of a message with an animation, an audio, a document, a photo or a video, including message caption. If only the caption needs to be edited, use editMessageCaption instead. -The media can't be edited if the message was set to self-destruct or to a self-destructing media. The type of message content in an album can't be changed with exception of replacing a photo with a video or vice versa. -Returns the edited message after the edit is completed on the server side. Can be used only if message.can_be_edited == true */
     export interface editMessageMedia {
         '@type': 'editMessageMedia';
         /** The chat the message belongs to */
@@ -17245,7 +17855,7 @@ namespace TdApi {
     }
     
     
-    /** Edits the message content caption. Returns the edited message after the edit is completed on the server side */
+    /** Edits the message content caption. Returns the edited message after the edit is completed on the server side. -Can be used only if message.can_be_edited == true */
     export interface editMessageCaption {
         '@type': 'editMessageCaption';
         /** The chat the message belongs to */
@@ -17256,10 +17866,12 @@ namespace TdApi {
         reply_markup?: ReplyMarkup;
         /** New message content caption; 0-getOption("message_caption_length_max") characters; pass null to remove caption */
         caption?: formattedText;
+        /** Pass true to show the caption above the media; otherwise, caption will be shown below the media. Can be true only for animation, photo, and video messages */
+        show_caption_above_media?: Bool;
     }
     
     
-    /** Edits the message reply markup; for bots only. Returns the edited message after the edit is completed on the server side */
+    /** Edits the message reply markup; for bots only. Returns the edited message after the edit is completed on the server side. -Can be used only if message.can_be_edited == true */
     export interface editMessageReplyMarkup {
         '@type': 'editMessageReplyMarkup';
         /** The chat the message belongs to */
@@ -17292,6 +17904,8 @@ namespace TdApi {
         reply_markup?: ReplyMarkup;
         /** New location content of the message; pass null to stop sharing the live location */
         location?: location;
+        /** New time relative to the message send date, for which the location can be updated, in seconds. If 0x7FFFFFFF specified, then the location can be updated forever. -Otherwise, must not exceed the current live_period by more than a day, and the live location expiration date must remain in the next 90 days. Pass 0 to keep the current live_period */
+        live_period?: int32;
         /** The new direction in which the location moves, in degrees; 1-360. Pass 0 if unknown */
         heading?: int32;
         /** The new maximum distance for proximity alerts, in meters (0-100000). Pass 0 if the notification is disabled */
@@ -17320,6 +17934,8 @@ namespace TdApi {
         reply_markup?: ReplyMarkup;
         /** New message content caption; pass null to remove caption; 0-getOption("message_caption_length_max") characters */
         caption?: formattedText;
+        /** Pass true to show the caption above the media; otherwise, caption will be shown below the media. Can be true only for animation, photo, and video messages */
+        show_caption_above_media?: Bool;
     }
     
     
@@ -17345,6 +17961,18 @@ namespace TdApi {
     }
     
     
+    /** Changes the fact-check of a message. Can be only used if getOption("can_edit_fact_check") == true */
+    export interface setMessageFactCheck {
+        '@type': 'setMessageFactCheck';
+        /** The channel chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message. The message must be one of the following types: messageAnimation, messageAudio, messageDocument, messagePhoto, messageText, messageVideo */
+        message_id?: int53;
+        /** New text of the fact-check; 0-getOption("fact_check_length_max") characters; pass null to remove it. Only Bold, Italic, and TextUrl entities with https://t.me/ links are supported */
+        text?: formattedText;
+    }
+    
+    
     /** Sends a message on behalf of a business account; for bots only. Returns the message after it was sent */
     export interface sendBusinessMessage {
         '@type': 'sendBusinessMessage';
@@ -17358,6 +17986,8 @@ namespace TdApi {
         disable_notification?: Bool;
         /** Pass true if the content of the message must be protected from forwarding and saving */
         protect_content?: Bool;
+        /** Identifier of the effect to apply to the message */
+        effect_id?: int64;
         /** Markup for replying to the message; pass null if none */
         reply_markup?: ReplyMarkup;
         /** The content of the message to be sent */
@@ -17378,8 +18008,110 @@ namespace TdApi {
         disable_notification?: Bool;
         /** Pass true if the content of the message must be protected from forwarding and saving */
         protect_content?: Bool;
-        /** Contents of messages to be sent. At most 10 messages can be added to an album */
+        /** Identifier of the effect to apply to the message */
+        effect_id?: int64;
+        /** Contents of messages to be sent. At most 10 messages can be added to an album. All messages must have the same value of show_caption_above_media */
         input_message_contents?: vector<InputMessageContent>;
+    }
+    
+    
+    /** Edits the text of a text or game message sent on behalf of a business account; for bots only */
+    export interface editBusinessMessageText {
+        '@type': 'editBusinessMessageText';
+        /** Unique identifier of business connection on behalf of which the message was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none */
+        reply_markup?: ReplyMarkup;
+        /** New text content of the message. Must be of type inputMessageText */
+        input_message_content?: InputMessageContent;
+    }
+    
+    
+    /** Edits the content of a live location in a message sent on behalf of a business account; for bots only */
+    export interface editBusinessMessageLiveLocation {
+        '@type': 'editBusinessMessageLiveLocation';
+        /** Unique identifier of business connection on behalf of which the message was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none */
+        reply_markup?: ReplyMarkup;
+        /** New location content of the message; pass null to stop sharing the live location */
+        location?: location;
+        /** New time relative to the message send date, for which the location can be updated, in seconds. If 0x7FFFFFFF specified, then the location can be updated forever. -Otherwise, must not exceed the current live_period by more than a day, and the live location expiration date must remain in the next 90 days. Pass 0 to keep the current live_period */
+        live_period?: int32;
+        /** The new direction in which the location moves, in degrees; 1-360. Pass 0 if unknown */
+        heading?: int32;
+        /** The new maximum distance for proximity alerts, in meters (0-100000). Pass 0 if the notification is disabled */
+        proximity_alert_radius?: int32;
+    }
+    
+    
+    /** Edits the content of a message with an animation, an audio, a document, a photo or a video in a message sent on behalf of a business account; for bots only */
+    export interface editBusinessMessageMedia {
+        '@type': 'editBusinessMessageMedia';
+        /** Unique identifier of business connection on behalf of which the message was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none; for bots only */
+        reply_markup?: ReplyMarkup;
+        /** New content of the message. Must be one of the following types: inputMessageAnimation, inputMessageAudio, inputMessageDocument, inputMessagePhoto or inputMessageVideo */
+        input_message_content?: InputMessageContent;
+    }
+    
+    
+    /** Edits the caption of a message sent on behalf of a business account; for bots only */
+    export interface editBusinessMessageCaption {
+        '@type': 'editBusinessMessageCaption';
+        /** Unique identifier of business connection on behalf of which the message was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none */
+        reply_markup?: ReplyMarkup;
+        /** New message content caption; pass null to remove caption; 0-getOption("message_caption_length_max") characters */
+        caption?: formattedText;
+        /** Pass true to show the caption above the media; otherwise, caption will be shown below the media. Can be true only for animation, photo, and video messages */
+        show_caption_above_media?: Bool;
+    }
+    
+    
+    /** Edits the reply markup of a message sent on behalf of a business account; for bots only */
+    export interface editBusinessMessageReplyMarkup {
+        '@type': 'editBusinessMessageReplyMarkup';
+        /** Unique identifier of business connection on behalf of which the message was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none */
+        reply_markup?: ReplyMarkup;
+    }
+    
+    
+    /** Stops a poll sent on behalf of a business account; for bots only */
+    export interface stopBusinessPoll {
+        '@type': 'stopBusinessPoll';
+        /** Unique identifier of business connection on behalf of which the message with the poll was sent */
+        business_connection_id?: string;
+        /** The chat the message belongs to */
+        chat_id?: int53;
+        /** Identifier of the message containing the poll */
+        message_id?: int53;
+        /** The new message reply markup; pass null if none */
+        reply_markup?: ReplyMarkup;
     }
     
     
@@ -17469,6 +18201,18 @@ namespace TdApi {
     }
     
     
+    /** Adds 2-10 messages grouped together into an album to a quick reply shortcut. Currently, only audio, document, photo and video messages can be grouped into an album. -Documents and audio files can be only grouped in an album with messages of the same type. Returns sent messages */
+    export interface addQuickReplyShortcutMessageAlbum {
+        '@type': 'addQuickReplyShortcutMessageAlbum';
+        /** Name of the target shortcut */
+        shortcut_name?: string;
+        /** Identifier of a quick reply message in the same shortcut to be replied; pass 0 if none */
+        reply_to_message_id?: int53;
+        /** Contents of messages to be sent. At most 10 messages can be added to an album. All messages must have the same value of show_caption_above_media */
+        input_message_contents?: vector<InputMessageContent>;
+    }
+    
+    
     /** Readds quick reply messages which failed to add. Can be called only for messages for which messageSendingStateFailed.can_retry is true and after specified in messageSendingStateFailed.retry_after time passed. -If a message is readded, the corresponding failed to send message is deleted. Returns the sent messages in the same order as the message identifiers passed in message_ids. If a message can't be readded, null will be returned instead of the message */
     export interface readdQuickReplyShortcutMessages {
         '@type': 'readdQuickReplyShortcutMessages';
@@ -17491,7 +18235,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of custom emojis, which can be used as forum topic icon by all users */
+    /** Returns the list of custom emoji, which can be used as forum topic icon by all users */
     export interface getForumTopicDefaultIcons {
         '@type': 'getForumTopicDefaultIcons';
     }
@@ -17745,6 +18489,14 @@ namespace TdApi {
     }
     
     
+    /** Returns information about a message effect. Returns a 404 error if the effect is not found */
+    export interface getMessageEffect {
+        '@type': 'getMessageEffect';
+        /** Unique identifier of the effect */
+        effect_id?: int64;
+    }
+    
+    
     /** Searches for a given quote in a text. Returns found quote start position in UTF-16 code units. Returns a 404 error if the quote is not found. Can be called synchronously */
     export interface searchQuote {
         '@type': 'searchQuote';
@@ -17765,7 +18517,7 @@ namespace TdApi {
     }
     
     
-    /** Parses Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, BlockQuote, Code, Pre, PreCode, TextUrl and MentionName entities from a marked-up text. Can be called synchronously */
+    /** Parses Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, BlockQuote, ExpandableBlockQuote, Code, Pre, PreCode, TextUrl -and MentionName entities from a marked-up text. Can be called synchronously */
     export interface parseTextEntities {
         '@type': 'parseTextEntities';
         /** The text to parse */
@@ -17906,6 +18658,12 @@ namespace TdApi {
         '@type': 'hideSuggestedAction';
         /** Suggested action to hide */
         action?: SuggestedAction;
+    }
+    
+    
+    /** Hides the list of contacts that have close birthdays for 24 hours */
+    export interface hideContactCloseBirthdays {
+        '@type': 'hideContactCloseBirthdays';
     }
     
     
@@ -19059,7 +19817,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of saved notification sounds. If a sound isn't in the list, then default sound needs to be used */
+    /** Returns the list of saved notification sounds. If a sound isn't in the list, then default sound needs to be used */
     export interface getSavedNotificationSounds {
         '@type': 'getSavedNotificationSounds';
     }
@@ -19081,7 +19839,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of chats with non-default notification settings for new messages */
+    /** Returns the list of chats with non-default notification settings for new messages */
     export interface getChatNotificationSettingsExceptions {
         '@type': 'getChatNotificationSettingsExceptions';
         /** If specified, only chats from the scope will be returned; pass null to return chats from all scopes */
@@ -19109,7 +19867,15 @@ namespace TdApi {
     }
     
     
-    /** Resets all notification settings to their default values. By default, all chats are unmuted and message previews are shown */
+    /** Changes notification settings for reactions */
+    export interface setReactionNotificationSettings {
+        '@type': 'setReactionNotificationSettings';
+        /** The new notification settings for reactions */
+        notification_settings?: reactionNotificationSettings;
+    }
+    
+    
+    /** Resets all chat and scope notification settings to their default values. By default, all chats are unmuted and message previews are shown */
     export interface resetAllNotificationSettings {
         '@type': 'resetAllNotificationSettings';
     }
@@ -19189,7 +19955,7 @@ namespace TdApi {
         /** Full identifier of the original story, which content was used to create the story */
         from_story_full_id?: storyFullId;
         /** Pass true to keep the story accessible after expiration */
-        is_pinned?: Bool;
+        is_posted_to_chat_page?: Bool;
         /** Pass true if the content of the story must be protected from forwarding and screenshotting */
         protect_content?: Bool;
     }
@@ -19221,15 +19987,15 @@ namespace TdApi {
     }
     
     
-    /** Toggles whether a story is accessible after expiration. Can be called only if story.can_toggle_is_pinned == true */
-    export interface toggleStoryIsPinned {
-        '@type': 'toggleStoryIsPinned';
+    /** Toggles whether a story is accessible after expiration. Can be called only if story.can_toggle_is_posted_to_chat_page == true */
+    export interface toggleStoryIsPostedToChatPage {
+        '@type': 'toggleStoryIsPostedToChatPage';
         /** Identifier of the chat that posted the story */
         story_sender_chat_id?: int53;
         /** Identifier of the story */
         story_id?: int32;
         /** Pass true to make the story accessible after expiration; pass false to make it private */
-        is_pinned?: Bool;
+        is_posted_to_chat_page?: Bool;
     }
     
     
@@ -19243,7 +20009,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of chats with non-default notification settings for stories */
+    /** Returns the list of chats with non-default notification settings for stories */
     export interface getStoryNotificationSettingsExceptions {
         '@type': 'getStoryNotificationSettingsExceptions';
     }
@@ -19275,12 +20041,12 @@ namespace TdApi {
     }
     
     
-    /** Returns the list of pinned stories posted by the given chat. The stories are returned in a reverse chronological order (i.e., in order of decreasing story_id). -For optimal performance, the number of returned stories is chosen by TDLib */
-    export interface getChatPinnedStories {
-        '@type': 'getChatPinnedStories';
+    /** Returns the list of stories that posted by the given chat to its chat page. If from_story_id == 0, then pinned stories are returned first. -Then, stories are returned in a reverse chronological order (i.e., in order of decreasing story_id). For optimal performance, the number of returned stories is chosen by TDLib */
+    export interface getChatPostedToChatPageStories {
+        '@type': 'getChatPostedToChatPageStories';
         /** Chat identifier */
         chat_id?: int53;
-        /** Identifier of the story starting from which stories must be returned; use 0 to get results from the last story */
+        /** Identifier of the story starting from which stories must be returned; use 0 to get results from pinned and the newest story */
         from_story_id?: int32;
         /** The maximum number of stories to be returned -For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
         limit?: int32;
@@ -19296,6 +20062,16 @@ namespace TdApi {
         from_story_id?: int32;
         /** The maximum number of stories to be returned -For optimal performance, the number of returned stories is chosen by TDLib and can be smaller than the specified limit */
         limit?: int32;
+    }
+    
+    
+    /** Changes the list of pinned stories on a chat page; requires can_edit_stories right in the chat */
+    export interface setChatPinnedStories {
+        '@type': 'setChatPinnedStories';
+        /** Identifier of the chat that posted the stories */
+        chat_id?: int53;
+        /** New list of pinned stories. All stories must be posted to the chat page first. There can be up to getOption("pinned_story_count_max") pinned stories on a chat page */
+        story_ids?: vector<int32>;
     }
     
     
@@ -19413,7 +20189,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of features available on the specific chat boost level; this is an offline request */
+    /** Returns the list of features available on the specific chat boost level; this is an offline request */
     export interface getChatBoostLevelFeatures {
         '@type': 'getChatBoostLevelFeatures';
         /** Pass true to get the list of features for channels; pass false to get the list of features for supergroups */
@@ -19423,7 +20199,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of features available for different chat boost levels; this is an offline request */
+    /** Returns the list of features available for different chat boost levels; this is an offline request */
     export interface getChatBoostFeatures {
         '@type': 'getChatBoostFeatures';
         /** Pass true to get the list of features for channels; pass false to get the list of features for supergroups */
@@ -19471,7 +20247,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of boosts applied to a chat; requires administrator rights in the chat */
+    /** Returns the list of boosts applied to a chat; requires administrator rights in the chat */
     export interface getChatBoosts {
         '@type': 'getChatBoosts';
         /** Identifier of the chat */
@@ -19485,7 +20261,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of boosts applied to a chat by a given user; requires administrator rights in the chat; for bots only */
+    /** Returns the list of boosts applied to a chat by a given user; requires administrator rights in the chat; for bots only */
     export interface getUserChatBoosts {
         '@type': 'getUserChatBoosts';
         /** Identifier of the chat */
@@ -19593,7 +20369,7 @@ namespace TdApi {
     }
     
     
-    /** Preliminary uploads a file to the cloud before sending it in a message, which can be useful for uploading of being recorded voice and video notes. Updates updateFile will be used -to notify about upload progress and successful completion of the upload. The file will not have a persistent remote identifier until it is sent in a message */
+    /** Preliminary uploads a file to the cloud before sending it in a message, which can be useful for uploading of being recorded voice and video notes. -In all other cases there is no need to preliminary upload a file. Updates updateFile will be used to notify about upload progress. -The upload will not be completed until the file is sent in a message */
     export interface preliminaryUploadFile {
         '@type': 'preliminaryUploadFile';
         /** File to upload */
@@ -19737,6 +20513,16 @@ namespace TdApi {
     }
     
     
+    /** Application verification has been completed. Can be called before authorization */
+    export interface setApplicationVerificationToken {
+        '@type': 'setApplicationVerificationToken';
+        /** Unique identifier for the verification process as received from updateApplicationVerificationRequired */
+        verification_id?: int53;
+        /** Play Integrity API token for the Android application, or secret from push notification for the iOS application; -pass an empty string to abort verification and receive error VERIFICATION_FAILED for the request */
+        token?: string;
+    }
+    
+    
     /** Returns information about a file with messages exported from another application */
     export interface getMessageFileType {
         '@type': 'getMessageFileType';
@@ -19817,7 +20603,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of chat administrators with number of their invite links. Requires owner privileges in the chat */
+    /** Returns the list of chat administrators with number of their invite links. Requires owner privileges in the chat */
     export interface getChatInviteLinkCounts {
         '@type': 'getChatInviteLinkCounts';
         /** Chat identifier */
@@ -20025,7 +20811,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of participant identifiers, on whose behalf a video chat in the chat can be joined */
+    /** Returns the list of participant identifiers, on whose behalf a video chat in the chat can be joined */
     export interface getVideoChatAvailableParticipants {
         '@type': 'getVideoChatAvailableParticipants';
         /** Chat identifier */
@@ -20474,6 +21260,8 @@ namespace TdApi {
         '@type': 'searchUserByPhoneNumber';
         /** Phone number to search for */
         phone_number?: string;
+        /** Pass true to get only locally available information without sending network requests */
+        only_local?: Bool;
     }
     
     
@@ -20502,7 +21290,7 @@ namespace TdApi {
         '@type': 'getStickers';
         /** Type of the stickers to return */
         sticker_type?: StickerType;
-        /** Search query; a space-separated list of emoji or a keyword prefix. If empty, returns all known installed stickers */
+        /** Search query; a space-separated list of emojis or a keyword prefix. If empty, returns all known installed stickers */
         query?: string;
         /** The maximum number of stickers to be returned */
         limit?: int32;
@@ -20530,7 +21318,7 @@ namespace TdApi {
         '@type': 'searchStickers';
         /** Type of the stickers to return */
         sticker_type?: StickerType;
-        /** Space-separated list of emoji to search for; must be non-empty */
+        /** Space-separated list of emojis to search for; must be non-empty */
         emojis?: string;
         /** The maximum number of stickers to be returned; 0-100 */
         limit?: int32;
@@ -20745,7 +21533,7 @@ namespace TdApi {
     }
     
     
-    /** Returns available emojis categories */
+    /** Returns available emoji categories */
     export interface getEmojiCategories {
         '@type': 'getEmojiCategories';
         /** Type of emoji categories to return; pass null to get default emoji categories */
@@ -20769,7 +21557,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of custom emoji stickers by their identifiers. Stickers are returned in arbitrary order. Only found stickers are returned */
+    /** Returns the list of custom emoji stickers by their identifiers. Stickers are returned in arbitrary order. Only found stickers are returned */
     export interface getCustomEmojiStickers {
         '@type': 'getCustomEmojiStickers';
         /** Identifiers of custom emoji stickers. At most 200 custom emoji stickers can be received simultaneously */
@@ -20801,7 +21589,7 @@ namespace TdApi {
     }
     
     
-    /** Manually adds a new animation to the list of saved animations. The new animation is added to the beginning of the list. If the animation was already in the list, it is removed first. Only non-secret video animations with MIME type "video/mp4" can be added to the list */
+    /** Manually adds a new animation to the list of saved animations. The new animation is added to the beginning of the list. If the animation was already in the list, it is removed first. -Only non-secret video animations with MIME type "video/mp4" can be added to the list */
     export interface addSavedAnimation {
         '@type': 'addSavedAnimation';
         /** The animation file to be added. Only animations known to the server (i.e., successfully sent via a message) can be added to the list */
@@ -20975,6 +21763,14 @@ namespace TdApi {
     }
     
     
+    /** Toggles whether the current user has sponsored messages enabled. The setting has no effect for users without Telegram Premium for which sponsored messages are always enabled */
+    export interface toggleHasSponsoredMessagesEnabled {
+        '@type': 'toggleHasSponsoredMessagesEnabled';
+        /** Pass true to enable sponsored messages for the current user; false to disable them */
+        has_sponsored_messages_enabled?: Bool;
+    }
+    
+    
     /** Changes the business location of the current user. Requires Telegram Business subscription */
     export interface setBusinessLocation {
         '@type': 'setBusinessLocation';
@@ -21030,14 +21826,24 @@ namespace TdApi {
     /** Sends Firebase Authentication SMS to the specified phone number. Works only when received a code of the type authenticationCodeTypeFirebaseAndroid or authenticationCodeTypeFirebaseIos */
     export interface sendPhoneNumberFirebaseSms {
         '@type': 'sendPhoneNumberFirebaseSms';
-        /** SafetyNet Attestation API token for the Android application, or secret from push notification for the iOS application */
+        /** Play Integrity API or SafetyNet Attestation API token for the Android application, or secret from push notification for the iOS application */
         token?: string;
+    }
+    
+    
+    /** Reports that authentication code wasn't delivered via SMS to the specified phone number; for official mobile applications only */
+    export interface reportPhoneNumberCodeMissing {
+        '@type': 'reportPhoneNumberCodeMissing';
+        /** Current mobile network code */
+        mobile_network_code?: string;
     }
     
     
     /** Resends the authentication code sent to a phone number. Works only if the previously received authenticationCodeInfo next_code_type was not null and the server-specified timeout has passed */
     export interface resendPhoneNumberCode {
         '@type': 'resendPhoneNumberCode';
+        /** Reason of code resending; pass null if unknown */
+        reason?: ResendCodeReason;
     }
     
     
@@ -21165,7 +21971,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of commands supported by the bot for the given user scope and language; for bots only */
+    /** Returns the list of commands supported by the bot for the given user scope and language; for bots only */
     export interface getCommands {
         '@type': 'getCommands';
         /** The scope to which the commands are relevant; pass null to get commands in the default bot command scope */
@@ -21494,7 +22300,7 @@ namespace TdApi {
     /** Toggles whether joining is mandatory to send messages to a discussion supergroup; requires can_restrict_members administrator right */
     export interface toggleSupergroupJoinToSendMessages {
         '@type': 'toggleSupergroupJoinToSendMessages';
-        /** Identifier of the supergroup */
+        /** Identifier of the supergroup that isn't a broadcast group */
         supergroup_id?: int53;
         /** New value of join_to_send_messages */
         join_to_send_messages?: Bool;
@@ -21504,7 +22310,7 @@ namespace TdApi {
     /** Toggles whether all users directly joining the supergroup need to be approved by supergroup administrators; requires can_restrict_members administrator right */
     export interface toggleSupergroupJoinByRequest {
         '@type': 'toggleSupergroupJoinByRequest';
-        /** Identifier of the channel */
+        /** Identifier of the supergroup that isn't a broadcast group */
         supergroup_id?: int53;
         /** New value of join_by_request */
         join_by_request?: Bool;
@@ -21668,7 +22474,7 @@ namespace TdApi {
         order_info_id?: string;
         /** Identifier of a chosen shipping option, if applicable */
         shipping_option_id?: string;
-        /** The credentials chosen by user for payment */
+        /** The credentials chosen by user for payment; pass null for a payment in Telegram stars */
         credentials?: InputCredentials;
         /** Chosen by the user amount of tip in the smallest units of the currency */
         tip_amount?: int53;
@@ -21708,6 +22514,16 @@ namespace TdApi {
         '@type': 'createInvoiceLink';
         /** Information about the invoice of the type inputMessageInvoice */
         invoice?: InputMessageContent;
+    }
+    
+    
+    /** Refunds a previously done payment in Telegram Stars */
+    export interface refundStarPayment {
+        '@type': 'refundStarPayment';
+        /** Identifier of the user that did the payment */
+        user_id?: int53;
+        /** Telegram payment identifier */
+        telegram_payment_charge_id?: string;
     }
     
     
@@ -21982,7 +22798,7 @@ namespace TdApi {
         '@type': 'deleteAccount';
         /** The reason why the account was deleted; optional */
         reason?: string;
-        /** The 2-step verification password of the current user. If not specified, account deletion can be canceled within one week */
+        /** The 2-step verification password of the current user. If the current user isn't authorized, then an empty string can be passed and account deletion can be canceled within one week */
         password?: string;
     }
     
@@ -22069,7 +22885,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of revenue transactions for a chat. Currently, this method can be used only for channels if supergroupFullInfo.can_get_revenue_statistics == true */
+    /** Returns the list of revenue transactions for a chat. Currently, this method can be used only for channels if supergroupFullInfo.can_get_revenue_statistics == true */
     export interface getChatRevenueTransactions {
         '@type': 'getChatRevenueTransactions';
         /** Chat identifier */
@@ -22078,6 +22894,28 @@ namespace TdApi {
         offset?: int32;
         /** The maximum number of transactions to be returned; up to 200 */
         limit?: int32;
+    }
+    
+    
+    /** Returns detailed Telegram star revenue statistics */
+    export interface getStarRevenueStatistics {
+        '@type': 'getStarRevenueStatistics';
+        /** Identifier of the owner of the Telegram stars; can be identifier of an owned bot, or identifier of a channel chat with supergroupFullInfo.can_get_revenue_statistics == true */
+        owner_id?: MessageSender;
+        /** Pass true if a dark theme is used by the application */
+        is_dark?: Bool;
+    }
+    
+    
+    /** Returns URL for Telegram star withdrawal */
+    export interface getStarWithdrawalUrl {
+        '@type': 'getStarWithdrawalUrl';
+        /** Identifier of the owner of the Telegram stars; can be identifier of an owned bot, or identifier of a channel chat with supergroupFullInfo.can_get_revenue_statistics == true */
+        owner_id?: MessageSender;
+        /** The number of Telegram stars to withdraw. Must be at least getOption("star_withdrawal_count_min") */
+        star_count?: int53;
+        /** The 2-step verification password of the current user */
+        password?: string;
     }
     
     
@@ -22477,7 +23315,7 @@ namespace TdApi {
     }
     
     
-    /** Changes the list of emoji corresponding to a sticker. The sticker must belong to a regular or custom emoji sticker set that is owned by the current user */
+    /** Changes the list of emojis corresponding to a sticker. The sticker must belong to a regular or custom emoji sticker set that is owned by the current user */
     export interface setStickerEmojis {
         '@type': 'setStickerEmojis';
         /** Sticker */
@@ -22621,9 +23459,29 @@ namespace TdApi {
     }
     
     
-    /** Checks whether Telegram Premium purchase is possible. Must be called before in-store Premium purchase */
-    export interface canPurchasePremium {
-        '@type': 'canPurchasePremium';
+    /** Returns available options for Telegram stars purchase */
+    export interface getStarPaymentOptions {
+        '@type': 'getStarPaymentOptions';
+    }
+    
+    
+    /** Returns the list of Telegram star transactions for the specified owner */
+    export interface getStarTransactions {
+        '@type': 'getStarTransactions';
+        /** Identifier of the owner of the Telegram stars; can be the identifier of the current user, identifier of an owned bot, -or identifier of a channel chat with supergroupFullInfo.can_get_revenue_statistics == true */
+        owner_id?: MessageSender;
+        /** Direction of the transactions to receive; pass null to get all transactions */
+        direction?: StarTransactionDirection;
+        /** Offset of the first transaction to return as received from the previous request; use empty string to get the first chunk of results */
+        offset?: string;
+        /** The maximum number of transactions to return */
+        limit?: int32;
+    }
+    
+    
+    /** Checks whether an in-store purchase is possible. Must be called before any in-store purchase */
+    export interface canPurchaseFromStore {
+        '@type': 'canPurchaseFromStore';
         /** Transaction purpose */
         purpose?: StorePaymentPurpose;
     }
@@ -22819,7 +23677,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of proxies that are currently set up. Can be called before authorization */
+    /** Returns the list of proxies that are currently set up. Can be called before authorization */
     export interface getProxies {
         '@type': 'getProxies';
     }
@@ -22869,7 +23727,7 @@ namespace TdApi {
     }
     
     
-    /** Returns list of available TDLib internal log tags, for example, ["actor", "binlog", "connections", "notifications", "proxy"]. Can be called synchronously */
+    /** Returns the list of available TDLib internal log tags, for example, ["actor", "binlog", "connections", "notifications", "proxy"]. Can be called synchronously */
     export interface getLogTags {
         '@type': 'getLogTags';
     }
@@ -23038,7 +23896,7 @@ namespace TdApi {
         new_verbosity_level?: jsLogLevel;
     }
     
-    export type TdFunction = getAuthorizationState | setTdlibParameters | setAuthenticationPhoneNumber | setAuthenticationEmailAddress | resendAuthenticationCode | checkAuthenticationEmailCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | resetAuthenticationEmailAddress | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | sendAuthenticationFirebaseSms | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | setLoginEmailAddress | resendLoginEmailAddressCode | checkLoginEmailAddressCode | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | cancelRecoveryEmailAddressVerification | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageReadDate | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getChatSimilarChats | getChatSimilarChatCount | openChatSimilarChat | getTopChats | removeTopChat | searchRecentlyFoundChats | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getSuitablePersonalChats | loadSavedMessagesTopics | getSavedMessagesTopicHistory | getSavedMessagesTopicMessageByDate | deleteSavedMessagesTopicHistory | deleteSavedMessagesTopicMessagesByDate | toggleSavedMessagesTopicIsPinned | setPinnedSavedMessagesTopics | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchSavedMessages | searchCallMessages | searchOutgoingDocumentMessages | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatMessagePosition | getChatScheduledMessages | getChatSponsoredMessages | clickChatSponsoredMessage | reportChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | translateMessageText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | sendQuickReplyShortcutMessages | resendMessages | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | sendBusinessMessage | sendBusinessMessageAlbum | checkQuickReplyShortcutName | loadQuickReplyShortcuts | setQuickReplyShortcutName | deleteQuickReplyShortcut | reorderQuickReplyShortcuts | loadQuickReplyShortcutMessages | deleteQuickReplyShortcutMessages | addQuickReplyShortcutMessage | addQuickReplyShortcutInlineQueryResultMessage | readdQuickReplyShortcutMessages | editQuickReplyMessage | getForumTopicDefaultIcons | createForumTopic | editForumTopic | getForumTopic | getForumTopicLink | getForumTopics | setForumTopicNotificationSettings | toggleForumTopicIsClosed | toggleGeneralForumTopicIsHidden | toggleForumTopicIsPinned | setPinnedForumTopics | deleteForumTopic | getEmojiReaction | getCustomEmojiReactionAnimations | getMessageAvailableReactions | clearRecentReactions | addMessageReaction | removeMessageReaction | setMessageReactions | getMessageAddedReactions | setDefaultReactionType | getSavedMessagesTags | setSavedMessagesTagLabel | searchQuote | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getCountryFlagEmoji | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | getBusinessConnection | getLoginUrlInfo | getLoginUrl | shareUsersWithBot | shareChatWithBot | getInlineQueryResults | answerInlineQuery | searchWebApp | getWebAppLinkUrl | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLink | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllMessageThreadMentions | readAllChatReactions | readAllMessageThreadReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFolder | createChatFolder | editChatFolder | deleteChatFolder | getChatFolderChatsToLeave | getChatFolderChatCount | reorderChatFolders | toggleChatFolderTags | getRecommendedChatFolders | getChatFolderDefaultIconName | getChatsForChatFolderInviteLink | createChatFolderInviteLink | getChatFolderInviteLinks | editChatFolderInviteLink | deleteChatFolderInviteLink | checkChatFolderInviteLink | addChatFolderByInviteLink | getChatFolderNewChats | processChatFolderNewChats | getArchiveChatListSettings | setArchiveChatListSettings | setChatTitle | setChatPhoto | setChatAccentColor | setChatProfileAccentColor | setChatMessageAutoDeleteTime | setChatEmojiStatus | setChatPermissions | setChatBackground | deleteChatBackground | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatViewAsTopics | toggleChatIsTranslatable | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | unpinAllMessageThreadMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | readChatList | getStory | getChatsToSendStories | canSendStory | sendStory | editStory | setStoryPrivacySettings | toggleStoryIsPinned | deleteStory | getStoryNotificationSettingsExceptions | loadActiveStories | setChatActiveStoriesList | getChatActiveStories | getChatPinnedStories | getChatArchivedStories | openStory | closeStory | getStoryAvailableReactions | setStoryReaction | getStoryInteractions | getChatStoryInteractions | reportStory | activateStoryStealthMode | getStoryPublicForwards | getChatBoostLevelFeatures | getChatBoostFeatures | getAvailableChatBoostSlots | getChatBoostStatus | boostChat | getChatBoostLink | getChatBoostLinkInfo | getChatBoosts | getUserChatBoosts | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | getThemedEmojiStatuses | getRecentEmojiStatuses | getDefaultEmojiStatuses | clearRecentEmojiStatuses | getThemedChatEmojiStatuses | getDefaultChatEmojiStatuses | getDisallowedChatEmojiStatuses | downloadFile | cancelDownloadFile | getSuggestedFileName | preliminaryUploadFile | cancelPreliminaryUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | setMessageSenderBlockList | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | setCloseFriends | getCloseFriends | setUserPersonalProfilePhoto | suggestUserProfilePhoto | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | getAllStickerEmojis | searchStickers | getGreetingStickers | getPremiumStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getKeywordEmojis | getEmojiCategories | getAnimatedEmoji | getEmojiSuggestionsUrl | getCustomEmojiStickers | getDefaultChatPhotoCustomEmojiStickers | getDefaultProfilePhotoCustomEmojiStickers | getDefaultBackgroundCustomEmojiStickers | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setAccentColor | setProfileAccentColor | setName | setBio | setUsername | toggleUsernameIsActive | reorderActiveUsernames | setBirthdate | setPersonalChat | setEmojiStatus | setLocation | setBusinessLocation | setBusinessOpeningHours | setBusinessGreetingMessageSettings | setBusinessAwayMessageSettings | setBusinessStartPage | sendPhoneNumberCode | sendPhoneNumberFirebaseSms | resendPhoneNumberCode | checkPhoneNumberCode | getBusinessConnectedBot | setBusinessConnectedBot | deleteBusinessConnectedBot | toggleBusinessConnectedBotChatIsPaused | removeBusinessConnectedBotFromChat | getBusinessChatLinks | createBusinessChatLink | editBusinessChatLink | deleteBusinessChatLink | getBusinessChatLinkInfo | getUserLink | searchUserByToken | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | canBotSendMessages | allowBotToSendMessages | sendWebAppCustomRequest | setBotName | getBotName | setBotProfilePhoto | toggleBotUsernameIsActive | reorderBotActiveUsernames | setBotInfoDescription | getBotInfoDescription | setBotInfoShortDescription | getBotInfoShortDescription | getActiveSessions | terminateSession | terminateAllOtherSessions | confirmSession | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | toggleSupergroupUsernameIsActive | disableAllSupergroupUsernames | reorderSupergroupActiveUsernames | setSupergroupStickerSet | setSupergroupCustomEmojiStickerSet | setSupergroupUnrestrictBoostCount | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupCanHaveSponsoredMessages | toggleSupergroupHasHiddenMembers | toggleSupergroupHasAggressiveAntiSpamEnabled | toggleSupergroupIsForum | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | reportSupergroupAntiSpamFalsePositive | getSupergroupMembers | closeSecretChat | getChatEventLog | getTimeZones | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | getSupportUser | getBackgroundUrl | searchBackground | setDefaultBackground | deleteDefaultBackground | getInstalledBackgrounds | removeInstalledBackground | resetInstalledBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | setReadDatePrivacySettings | getReadDatePrivacySettings | setNewChatPrivacySettings | getNewChatPrivacySettings | canSendMessageToUser | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | setDefaultMessageAutoDeleteTime | getDefaultMessageAutoDeleteTime | removeChatActionBar | reportChat | reportChatPhoto | reportMessageReactions | getChatRevenueStatistics | getChatRevenueWithdrawalUrl | getChatRevenueTransactions | getChatStatistics | getMessageStatistics | getMessagePublicForwards | getStoryStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getAutosaveSettings | setAutosaveSettings | clearAutosaveSettingsExceptions | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | replaceStickerInSet | setStickerSetThumbnail | setCustomEmojiStickerSetThumbnail | setStickerSetTitle | deleteStickerSet | setStickerPositionInSet | removeStickerFromSet | setStickerEmojis | setStickerKeywords | setStickerMaskPosition | getOwnedStickerSets | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickerExamples | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | getPremiumGiftCodePaymentOptions | checkPremiumGiftCode | applyPremiumGiftCode | launchPrepaidPremiumGiveaway | getPremiumGiveawayInfo | canPurchasePremium | assignAppStoreTransaction | assignGooglePlayTransaction | getBusinessFeatures | acceptTermsOfService | searchStringsByPrefix | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getCollectibleItemInfo | getDeepLinkInfo | getApplicationConfig | saveApplicationLogEvent | getApplicationDownloadLink | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | getUserSupportInfo | setUserSupportInfo | getSupportName | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
+    export type TdFunction = getAuthorizationState | setTdlibParameters | setAuthenticationPhoneNumber | setAuthenticationEmailAddress | resendAuthenticationCode | checkAuthenticationEmailCode | checkAuthenticationCode | requestQrCodeAuthentication | registerUser | resetAuthenticationEmailAddress | checkAuthenticationPassword | requestAuthenticationPasswordRecovery | checkAuthenticationPasswordRecoveryCode | recoverAuthenticationPassword | sendAuthenticationFirebaseSms | reportAuthenticationCodeMissing | checkAuthenticationBotToken | logOut | close | destroy | confirmQrCodeAuthentication | getCurrentState | setDatabaseEncryptionKey | getPasswordState | setPassword | setLoginEmailAddress | resendLoginEmailAddressCode | checkLoginEmailAddressCode | getRecoveryEmailAddress | setRecoveryEmailAddress | checkRecoveryEmailAddressCode | resendRecoveryEmailAddressCode | cancelRecoveryEmailAddressVerification | requestPasswordRecovery | checkPasswordRecoveryCode | recoverPassword | resetPassword | cancelPasswordReset | createTemporaryPassword | getTemporaryPasswordState | getMe | getUser | getUserFullInfo | getBasicGroup | getBasicGroupFullInfo | getSupergroup | getSupergroupFullInfo | getSecretChat | getChat | getMessage | getMessageLocally | getRepliedMessage | getChatPinnedMessage | getCallbackQueryMessage | getMessages | getMessageThread | getMessageReadDate | getMessageViewers | getFile | getRemoteFile | loadChats | getChats | searchPublicChat | searchPublicChats | searchChats | searchChatsOnServer | searchChatsNearby | getRecommendedChats | getChatSimilarChats | getChatSimilarChatCount | openChatSimilarChat | getTopChats | removeTopChat | searchRecentlyFoundChats | addRecentlyFoundChat | removeRecentlyFoundChat | clearRecentlyFoundChats | getRecentlyOpenedChats | checkChatUsername | getCreatedPublicChats | checkCreatedPublicChatsLimit | getSuitableDiscussionChats | getInactiveSupergroupChats | getSuitablePersonalChats | loadSavedMessagesTopics | getSavedMessagesTopicHistory | getSavedMessagesTopicMessageByDate | deleteSavedMessagesTopicHistory | deleteSavedMessagesTopicMessagesByDate | toggleSavedMessagesTopicIsPinned | setPinnedSavedMessagesTopics | getGroupsInCommon | getChatHistory | getMessageThreadHistory | deleteChatHistory | deleteChat | searchChatMessages | searchMessages | searchSecretMessages | searchSavedMessages | searchCallMessages | searchOutgoingDocumentMessages | searchPublicMessagesByTag | searchPublicStoriesByTag | searchPublicStoriesByLocation | searchPublicStoriesByVenue | getSearchedForTags | removeSearchedForTag | clearSearchedForTags | deleteAllCallMessages | searchChatRecentLocationMessages | getActiveLiveLocationMessages | getChatMessageByDate | getChatSparseMessagePositions | getChatMessageCalendar | getChatMessageCount | getChatMessagePosition | getChatScheduledMessages | getChatSponsoredMessages | clickChatSponsoredMessage | reportChatSponsoredMessage | removeNotification | removeNotificationGroup | getMessageLink | getMessageEmbeddingCode | getMessageLinkInfo | translateText | translateMessageText | recognizeSpeech | rateSpeechRecognition | getChatAvailableMessageSenders | setChatMessageSender | sendMessage | sendMessageAlbum | sendBotStartMessage | sendInlineQueryResultMessage | forwardMessages | sendQuickReplyShortcutMessages | resendMessages | addLocalMessage | deleteMessages | deleteChatMessagesBySender | deleteChatMessagesByDate | editMessageText | editMessageLiveLocation | editMessageMedia | editMessageCaption | editMessageReplyMarkup | editInlineMessageText | editInlineMessageLiveLocation | editInlineMessageMedia | editInlineMessageCaption | editInlineMessageReplyMarkup | editMessageSchedulingState | setMessageFactCheck | sendBusinessMessage | sendBusinessMessageAlbum | editBusinessMessageText | editBusinessMessageLiveLocation | editBusinessMessageMedia | editBusinessMessageCaption | editBusinessMessageReplyMarkup | stopBusinessPoll | checkQuickReplyShortcutName | loadQuickReplyShortcuts | setQuickReplyShortcutName | deleteQuickReplyShortcut | reorderQuickReplyShortcuts | loadQuickReplyShortcutMessages | deleteQuickReplyShortcutMessages | addQuickReplyShortcutMessage | addQuickReplyShortcutInlineQueryResultMessage | addQuickReplyShortcutMessageAlbum | readdQuickReplyShortcutMessages | editQuickReplyMessage | getForumTopicDefaultIcons | createForumTopic | editForumTopic | getForumTopic | getForumTopicLink | getForumTopics | setForumTopicNotificationSettings | toggleForumTopicIsClosed | toggleGeneralForumTopicIsHidden | toggleForumTopicIsPinned | setPinnedForumTopics | deleteForumTopic | getEmojiReaction | getCustomEmojiReactionAnimations | getMessageAvailableReactions | clearRecentReactions | addMessageReaction | removeMessageReaction | setMessageReactions | getMessageAddedReactions | setDefaultReactionType | getSavedMessagesTags | setSavedMessagesTagLabel | getMessageEffect | searchQuote | getTextEntities | parseTextEntities | parseMarkdown | getMarkdownText | getCountryFlagEmoji | getFileMimeType | getFileExtension | cleanFileName | getLanguagePackString | getJsonValue | getJsonString | getThemeParametersJsonString | setPollAnswer | getPollVoters | stopPoll | hideSuggestedAction | hideContactCloseBirthdays | getBusinessConnection | getLoginUrlInfo | getLoginUrl | shareUsersWithBot | shareChatWithBot | getInlineQueryResults | answerInlineQuery | searchWebApp | getWebAppLinkUrl | getWebAppUrl | sendWebAppData | openWebApp | closeWebApp | answerWebAppQuery | getCallbackQueryAnswer | answerCallbackQuery | answerShippingQuery | answerPreCheckoutQuery | setGameScore | setInlineGameScore | getGameHighScores | getInlineGameHighScores | deleteChatReplyMarkup | sendChatAction | openChat | closeChat | viewMessages | openMessageContent | clickAnimatedEmojiMessage | getInternalLink | getInternalLinkType | getExternalLinkInfo | getExternalLink | readAllChatMentions | readAllMessageThreadMentions | readAllChatReactions | readAllMessageThreadReactions | createPrivateChat | createBasicGroupChat | createSupergroupChat | createSecretChat | createNewBasicGroupChat | createNewSupergroupChat | createNewSecretChat | upgradeBasicGroupChatToSupergroupChat | getChatListsToAddChat | addChatToList | getChatFolder | createChatFolder | editChatFolder | deleteChatFolder | getChatFolderChatsToLeave | getChatFolderChatCount | reorderChatFolders | toggleChatFolderTags | getRecommendedChatFolders | getChatFolderDefaultIconName | getChatsForChatFolderInviteLink | createChatFolderInviteLink | getChatFolderInviteLinks | editChatFolderInviteLink | deleteChatFolderInviteLink | checkChatFolderInviteLink | addChatFolderByInviteLink | getChatFolderNewChats | processChatFolderNewChats | getArchiveChatListSettings | setArchiveChatListSettings | setChatTitle | setChatPhoto | setChatAccentColor | setChatProfileAccentColor | setChatMessageAutoDeleteTime | setChatEmojiStatus | setChatPermissions | setChatBackground | deleteChatBackground | setChatTheme | setChatDraftMessage | setChatNotificationSettings | toggleChatHasProtectedContent | toggleChatViewAsTopics | toggleChatIsTranslatable | toggleChatIsMarkedAsUnread | toggleChatDefaultDisableNotification | setChatAvailableReactions | setChatClientData | setChatDescription | setChatDiscussionGroup | setChatLocation | setChatSlowModeDelay | pinChatMessage | unpinChatMessage | unpinAllChatMessages | unpinAllMessageThreadMessages | joinChat | leaveChat | addChatMember | addChatMembers | setChatMemberStatus | banChatMember | canTransferOwnership | transferChatOwnership | getChatMember | searchChatMembers | getChatAdministrators | clearAllDraftMessages | getSavedNotificationSound | getSavedNotificationSounds | addSavedNotificationSound | removeSavedNotificationSound | getChatNotificationSettingsExceptions | getScopeNotificationSettings | setScopeNotificationSettings | setReactionNotificationSettings | resetAllNotificationSettings | toggleChatIsPinned | setPinnedChats | readChatList | getStory | getChatsToSendStories | canSendStory | sendStory | editStory | setStoryPrivacySettings | toggleStoryIsPostedToChatPage | deleteStory | getStoryNotificationSettingsExceptions | loadActiveStories | setChatActiveStoriesList | getChatActiveStories | getChatPostedToChatPageStories | getChatArchivedStories | setChatPinnedStories | openStory | closeStory | getStoryAvailableReactions | setStoryReaction | getStoryInteractions | getChatStoryInteractions | reportStory | activateStoryStealthMode | getStoryPublicForwards | getChatBoostLevelFeatures | getChatBoostFeatures | getAvailableChatBoostSlots | getChatBoostStatus | boostChat | getChatBoostLink | getChatBoostLinkInfo | getChatBoosts | getUserChatBoosts | getAttachmentMenuBot | toggleBotIsAddedToAttachmentMenu | getThemedEmojiStatuses | getRecentEmojiStatuses | getDefaultEmojiStatuses | clearRecentEmojiStatuses | getThemedChatEmojiStatuses | getDefaultChatEmojiStatuses | getDisallowedChatEmojiStatuses | downloadFile | cancelDownloadFile | getSuggestedFileName | preliminaryUploadFile | cancelPreliminaryUploadFile | writeGeneratedFilePart | setFileGenerationProgress | finishFileGeneration | readFilePart | deleteFile | addFileToDownloads | toggleDownloadIsPaused | toggleAllDownloadsArePaused | removeFileFromDownloads | removeAllFilesFromDownloads | searchFileDownloads | setApplicationVerificationToken | getMessageFileType | getMessageImportConfirmationText | importMessages | replacePrimaryChatInviteLink | createChatInviteLink | editChatInviteLink | getChatInviteLink | getChatInviteLinkCounts | getChatInviteLinks | getChatInviteLinkMembers | revokeChatInviteLink | deleteRevokedChatInviteLink | deleteAllRevokedChatInviteLinks | checkChatInviteLink | joinChatByInviteLink | getChatJoinRequests | processChatJoinRequest | processChatJoinRequests | createCall | acceptCall | sendCallSignalingData | discardCall | sendCallRating | sendCallDebugInformation | sendCallLog | getVideoChatAvailableParticipants | setVideoChatDefaultParticipant | createVideoChat | getVideoChatRtmpUrl | replaceVideoChatRtmpUrl | getGroupCall | startScheduledGroupCall | toggleGroupCallEnabledStartNotification | joinGroupCall | startGroupCallScreenSharing | toggleGroupCallScreenSharingIsPaused | endGroupCallScreenSharing | setGroupCallTitle | toggleGroupCallMuteNewParticipants | inviteGroupCallParticipants | getGroupCallInviteLink | revokeGroupCallInviteLink | startGroupCallRecording | endGroupCallRecording | toggleGroupCallIsMyVideoPaused | toggleGroupCallIsMyVideoEnabled | setGroupCallParticipantIsSpeaking | toggleGroupCallParticipantIsMuted | setGroupCallParticipantVolumeLevel | toggleGroupCallParticipantIsHandRaised | loadGroupCallParticipants | leaveGroupCall | endGroupCall | getGroupCallStreams | getGroupCallStreamSegment | setMessageSenderBlockList | blockMessageSenderFromReplies | getBlockedMessageSenders | addContact | importContacts | getContacts | searchContacts | removeContacts | getImportedContactCount | changeImportedContacts | clearImportedContacts | setCloseFriends | getCloseFriends | setUserPersonalProfilePhoto | suggestUserProfilePhoto | searchUserByPhoneNumber | sharePhoneNumber | getUserProfilePhotos | getStickers | getAllStickerEmojis | searchStickers | getGreetingStickers | getPremiumStickers | getInstalledStickerSets | getArchivedStickerSets | getTrendingStickerSets | getAttachedStickerSets | getStickerSet | searchStickerSet | searchInstalledStickerSets | searchStickerSets | changeStickerSet | viewTrendingStickerSets | reorderInstalledStickerSets | getRecentStickers | addRecentSticker | removeRecentSticker | clearRecentStickers | getFavoriteStickers | addFavoriteSticker | removeFavoriteSticker | getStickerEmojis | searchEmojis | getKeywordEmojis | getEmojiCategories | getAnimatedEmoji | getEmojiSuggestionsUrl | getCustomEmojiStickers | getDefaultChatPhotoCustomEmojiStickers | getDefaultProfilePhotoCustomEmojiStickers | getDefaultBackgroundCustomEmojiStickers | getSavedAnimations | addSavedAnimation | removeSavedAnimation | getRecentInlineBots | searchHashtags | removeRecentHashtag | getWebPagePreview | getWebPageInstantView | setProfilePhoto | deleteProfilePhoto | setAccentColor | setProfileAccentColor | setName | setBio | setUsername | toggleUsernameIsActive | reorderActiveUsernames | setBirthdate | setPersonalChat | setEmojiStatus | setLocation | toggleHasSponsoredMessagesEnabled | setBusinessLocation | setBusinessOpeningHours | setBusinessGreetingMessageSettings | setBusinessAwayMessageSettings | setBusinessStartPage | sendPhoneNumberCode | sendPhoneNumberFirebaseSms | reportPhoneNumberCodeMissing | resendPhoneNumberCode | checkPhoneNumberCode | getBusinessConnectedBot | setBusinessConnectedBot | deleteBusinessConnectedBot | toggleBusinessConnectedBotChatIsPaused | removeBusinessConnectedBotFromChat | getBusinessChatLinks | createBusinessChatLink | editBusinessChatLink | deleteBusinessChatLink | getBusinessChatLinkInfo | getUserLink | searchUserByToken | setCommands | deleteCommands | getCommands | setMenuButton | getMenuButton | setDefaultGroupAdministratorRights | setDefaultChannelAdministratorRights | canBotSendMessages | allowBotToSendMessages | sendWebAppCustomRequest | setBotName | getBotName | setBotProfilePhoto | toggleBotUsernameIsActive | reorderBotActiveUsernames | setBotInfoDescription | getBotInfoDescription | setBotInfoShortDescription | getBotInfoShortDescription | getActiveSessions | terminateSession | terminateAllOtherSessions | confirmSession | toggleSessionCanAcceptCalls | toggleSessionCanAcceptSecretChats | setInactiveSessionTtl | getConnectedWebsites | disconnectWebsite | disconnectAllWebsites | setSupergroupUsername | toggleSupergroupUsernameIsActive | disableAllSupergroupUsernames | reorderSupergroupActiveUsernames | setSupergroupStickerSet | setSupergroupCustomEmojiStickerSet | setSupergroupUnrestrictBoostCount | toggleSupergroupSignMessages | toggleSupergroupJoinToSendMessages | toggleSupergroupJoinByRequest | toggleSupergroupIsAllHistoryAvailable | toggleSupergroupCanHaveSponsoredMessages | toggleSupergroupHasHiddenMembers | toggleSupergroupHasAggressiveAntiSpamEnabled | toggleSupergroupIsForum | toggleSupergroupIsBroadcastGroup | reportSupergroupSpam | reportSupergroupAntiSpamFalsePositive | getSupergroupMembers | closeSecretChat | getChatEventLog | getTimeZones | getPaymentForm | validateOrderInfo | sendPaymentForm | getPaymentReceipt | getSavedOrderInfo | deleteSavedOrderInfo | deleteSavedCredentials | createInvoiceLink | refundStarPayment | getSupportUser | getBackgroundUrl | searchBackground | setDefaultBackground | deleteDefaultBackground | getInstalledBackgrounds | removeInstalledBackground | resetInstalledBackgrounds | getLocalizationTargetInfo | getLanguagePackInfo | getLanguagePackStrings | synchronizeLanguagePack | addCustomServerLanguagePack | setCustomLanguagePack | editCustomLanguagePackInfo | setCustomLanguagePackString | deleteLanguagePack | registerDevice | processPushNotification | getPushReceiverId | getRecentlyVisitedTMeUrls | setUserPrivacySettingRules | getUserPrivacySettingRules | setReadDatePrivacySettings | getReadDatePrivacySettings | setNewChatPrivacySettings | getNewChatPrivacySettings | canSendMessageToUser | getOption | setOption | setAccountTtl | getAccountTtl | deleteAccount | setDefaultMessageAutoDeleteTime | getDefaultMessageAutoDeleteTime | removeChatActionBar | reportChat | reportChatPhoto | reportMessageReactions | getChatRevenueStatistics | getChatRevenueWithdrawalUrl | getChatRevenueTransactions | getStarRevenueStatistics | getStarWithdrawalUrl | getChatStatistics | getMessageStatistics | getMessagePublicForwards | getStoryStatistics | getStatisticalGraph | getDatabaseStatistics | setNetworkType | getNetworkStatistics | addNetworkStatistics | resetNetworkStatistics | getAutoDownloadSettingsPresets | setAutoDownloadSettings | getAutosaveSettings | setAutosaveSettings | clearAutosaveSettingsExceptions | getBankCardInfo | getPassportElement | getAllPassportElements | setPassportElement | deletePassportElement | setPassportElementErrors | getPreferredCountryLanguage | sendEmailAddressVerificationCode | resendEmailAddressVerificationCode | checkEmailAddressVerificationCode | getPassportAuthorizationForm | getPassportAuthorizationFormAvailableElements | sendPassportAuthorizationForm | setBotUpdatesStatus | uploadStickerFile | getSuggestedStickerSetName | checkStickerSetName | createNewStickerSet | addStickerToSet | replaceStickerInSet | setStickerSetThumbnail | setCustomEmojiStickerSetThumbnail | setStickerSetTitle | deleteStickerSet | setStickerPositionInSet | removeStickerFromSet | setStickerEmojis | setStickerKeywords | setStickerMaskPosition | getOwnedStickerSets | getMapThumbnailFile | getPremiumLimit | getPremiumFeatures | getPremiumStickerExamples | viewPremiumFeature | clickPremiumSubscriptionButton | getPremiumState | getPremiumGiftCodePaymentOptions | checkPremiumGiftCode | applyPremiumGiftCode | launchPrepaidPremiumGiveaway | getPremiumGiveawayInfo | getStarPaymentOptions | getStarTransactions | canPurchaseFromStore | assignAppStoreTransaction | assignGooglePlayTransaction | getBusinessFeatures | acceptTermsOfService | searchStringsByPrefix | sendCustomRequest | answerCustomQuery | setAlarm | getCountries | getCountryCode | getPhoneNumberInfo | getPhoneNumberInfoSync | getCollectibleItemInfo | getDeepLinkInfo | getApplicationConfig | saveApplicationLogEvent | getApplicationDownloadLink | editProxy | enableProxy | disableProxy | removeProxy | getProxies | getProxyLink | pingProxy | setLogStream | getLogStream | setLogVerbosityLevel | getLogVerbosityLevel | getLogTags | setLogTagVerbosityLevel | getLogTagVerbosityLevel | addLogMessage | getUserSupportInfo | setUserSupportInfo | getSupportName | testCallEmpty | testCallString | testCallBytes | testCallVectorInt | testCallVectorIntObject | testCallVectorString | testCallVectorStringObject | testSquareInt | testNetwork | testProxy | testGetDifference | testUseUpdate | testReturnError | setJsLogVerbosityLevel;
     export type TdFunctionReturn<t> = 
     t extends getAuthorizationState ? AuthorizationState :
         t extends setTdlibParameters ? Ok :
@@ -23055,6 +23913,7 @@ namespace TdApi {
         t extends checkAuthenticationPasswordRecoveryCode ? Ok :
         t extends recoverAuthenticationPassword ? Ok :
         t extends sendAuthenticationFirebaseSms ? Ok :
+        t extends reportAuthenticationCodeMissing ? Ok :
         t extends checkAuthenticationBotToken ? Ok :
         t extends logOut ? Ok :
         t extends close ? Ok :
@@ -23106,6 +23965,7 @@ namespace TdApi {
         t extends searchChats ? Chats :
         t extends searchChatsOnServer ? Chats :
         t extends searchChatsNearby ? ChatsNearby :
+        t extends getRecommendedChats ? Chats :
         t extends getChatSimilarChats ? Chats :
         t extends getChatSimilarChatCount ? Count :
         t extends openChatSimilarChat ? Ok :
@@ -23140,6 +24000,13 @@ namespace TdApi {
         t extends searchSavedMessages ? FoundChatMessages :
         t extends searchCallMessages ? FoundMessages :
         t extends searchOutgoingDocumentMessages ? FoundMessages :
+        t extends searchPublicMessagesByTag ? FoundMessages :
+        t extends searchPublicStoriesByTag ? FoundStories :
+        t extends searchPublicStoriesByLocation ? FoundStories :
+        t extends searchPublicStoriesByVenue ? FoundStories :
+        t extends getSearchedForTags ? Hashtags :
+        t extends removeSearchedForTag ? Ok :
+        t extends clearSearchedForTags ? Ok :
         t extends deleteAllCallMessages ? Ok :
         t extends searchChatRecentLocationMessages ? Messages :
         t extends getActiveLiveLocationMessages ? Messages :
@@ -23185,8 +24052,15 @@ namespace TdApi {
         t extends editInlineMessageCaption ? Ok :
         t extends editInlineMessageReplyMarkup ? Ok :
         t extends editMessageSchedulingState ? Ok :
+        t extends setMessageFactCheck ? Ok :
         t extends sendBusinessMessage ? BusinessMessage :
         t extends sendBusinessMessageAlbum ? BusinessMessages :
+        t extends editBusinessMessageText ? BusinessMessage :
+        t extends editBusinessMessageLiveLocation ? BusinessMessage :
+        t extends editBusinessMessageMedia ? BusinessMessage :
+        t extends editBusinessMessageCaption ? BusinessMessage :
+        t extends editBusinessMessageReplyMarkup ? BusinessMessage :
+        t extends stopBusinessPoll ? BusinessMessage :
         t extends checkQuickReplyShortcutName ? Ok :
         t extends loadQuickReplyShortcuts ? Ok :
         t extends setQuickReplyShortcutName ? Ok :
@@ -23196,6 +24070,7 @@ namespace TdApi {
         t extends deleteQuickReplyShortcutMessages ? Ok :
         t extends addQuickReplyShortcutMessage ? QuickReplyMessage :
         t extends addQuickReplyShortcutInlineQueryResultMessage ? QuickReplyMessage :
+        t extends addQuickReplyShortcutMessageAlbum ? QuickReplyMessages :
         t extends readdQuickReplyShortcutMessages ? QuickReplyMessages :
         t extends editQuickReplyMessage ? Ok :
         t extends getForumTopicDefaultIcons ? Stickers :
@@ -23221,6 +24096,7 @@ namespace TdApi {
         t extends setDefaultReactionType ? Ok :
         t extends getSavedMessagesTags ? SavedMessagesTags :
         t extends setSavedMessagesTagLabel ? Ok :
+        t extends getMessageEffect ? MessageEffect :
         t extends searchQuote ? FoundPosition :
         t extends getTextEntities ? TextEntities :
         t extends parseTextEntities ? FormattedText :
@@ -23238,6 +24114,7 @@ namespace TdApi {
         t extends getPollVoters ? MessageSenders :
         t extends stopPoll ? Ok :
         t extends hideSuggestedAction ? Ok :
+        t extends hideContactCloseBirthdays ? Ok :
         t extends getBusinessConnection ? BusinessConnection :
         t extends getLoginUrlInfo ? LoginUrlInfo :
         t extends getLoginUrl ? HttpUrl :
@@ -23352,6 +24229,7 @@ namespace TdApi {
         t extends getChatNotificationSettingsExceptions ? Chats :
         t extends getScopeNotificationSettings ? ScopeNotificationSettings :
         t extends setScopeNotificationSettings ? Ok :
+        t extends setReactionNotificationSettings ? Ok :
         t extends resetAllNotificationSettings ? Ok :
         t extends toggleChatIsPinned ? Ok :
         t extends setPinnedChats ? Ok :
@@ -23362,14 +24240,15 @@ namespace TdApi {
         t extends sendStory ? Story :
         t extends editStory ? Ok :
         t extends setStoryPrivacySettings ? Ok :
-        t extends toggleStoryIsPinned ? Ok :
+        t extends toggleStoryIsPostedToChatPage ? Ok :
         t extends deleteStory ? Ok :
         t extends getStoryNotificationSettingsExceptions ? Chats :
         t extends loadActiveStories ? Ok :
         t extends setChatActiveStoriesList ? Ok :
         t extends getChatActiveStories ? ChatActiveStories :
-        t extends getChatPinnedStories ? Stories :
+        t extends getChatPostedToChatPageStories ? Stories :
         t extends getChatArchivedStories ? Stories :
+        t extends setChatPinnedStories ? Ok :
         t extends openStory ? Ok :
         t extends closeStory ? Ok :
         t extends getStoryAvailableReactions ? AvailableReactions :
@@ -23413,6 +24292,7 @@ namespace TdApi {
         t extends removeFileFromDownloads ? Ok :
         t extends removeAllFilesFromDownloads ? Ok :
         t extends searchFileDownloads ? FoundFileDownloads :
+        t extends setApplicationVerificationToken ? Ok :
         t extends getMessageFileType ? MessageFileType :
         t extends getMessageImportConfirmationText ? Text :
         t extends importMessages ? Ok :
@@ -23540,6 +24420,7 @@ namespace TdApi {
         t extends setPersonalChat ? Ok :
         t extends setEmojiStatus ? Ok :
         t extends setLocation ? Ok :
+        t extends toggleHasSponsoredMessagesEnabled ? Ok :
         t extends setBusinessLocation ? Ok :
         t extends setBusinessOpeningHours ? Ok :
         t extends setBusinessGreetingMessageSettings ? Ok :
@@ -23547,6 +24428,7 @@ namespace TdApi {
         t extends setBusinessStartPage ? Ok :
         t extends sendPhoneNumberCode ? AuthenticationCodeInfo :
         t extends sendPhoneNumberFirebaseSms ? Ok :
+        t extends reportPhoneNumberCodeMissing ? Ok :
         t extends resendPhoneNumberCode ? AuthenticationCodeInfo :
         t extends checkPhoneNumberCode ? Ok :
         t extends getBusinessConnectedBot ? BusinessConnectedBot :
@@ -23620,6 +24502,7 @@ namespace TdApi {
         t extends deleteSavedOrderInfo ? Ok :
         t extends deleteSavedCredentials ? Ok :
         t extends createInvoiceLink ? HttpUrl :
+        t extends refundStarPayment ? Ok :
         t extends getSupportUser ? User :
         t extends getBackgroundUrl ? HttpUrl :
         t extends searchBackground ? Background :
@@ -23662,6 +24545,8 @@ namespace TdApi {
         t extends getChatRevenueStatistics ? ChatRevenueStatistics :
         t extends getChatRevenueWithdrawalUrl ? HttpUrl :
         t extends getChatRevenueTransactions ? ChatRevenueTransactions :
+        t extends getStarRevenueStatistics ? StarRevenueStatistics :
+        t extends getStarWithdrawalUrl ? HttpUrl :
         t extends getChatStatistics ? ChatStatistics :
         t extends getMessageStatistics ? MessageStatistics :
         t extends getMessagePublicForwards ? PublicForwards :
@@ -23719,7 +24604,9 @@ namespace TdApi {
         t extends applyPremiumGiftCode ? Ok :
         t extends launchPrepaidPremiumGiveaway ? Ok :
         t extends getPremiumGiveawayInfo ? PremiumGiveawayInfo :
-        t extends canPurchasePremium ? Ok :
+        t extends getStarPaymentOptions ? StarPaymentOptions :
+        t extends getStarTransactions ? StarTransactions :
+        t extends canPurchaseFromStore ? Ok :
         t extends assignAppStoreTransaction ? Ok :
         t extends assignGooglePlayTransaction ? Ok :
         t extends getBusinessFeatures ? BusinessFeatures :
